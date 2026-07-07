@@ -1,0 +1,27 @@
+[workspace]
+members = ["crates/ntt", "crates/bench"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+
+[workspace.dependencies]
+ark-ff = { git = "https://github.com/benbencik/algebra.git", branch = "fast-mul", features = ["std", "parallel"] }
+ark-poly = { git = "https://github.com/benbencik/algebra.git", branch = "fast-mul", features = ["std", "parallel"] }
+ark-std = { version = "0.5.0", features = ["std"] }
+ntt = { path = "crates/ntt" }
+criterion = { version = "0.8", default-features = false }
+rand = { version = "0.8", features = ["small_rng"] }
+rayon = "1.10"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+[profile.bench]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = 1
