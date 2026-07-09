@@ -29,15 +29,5 @@ define_field!(
 );
 
 
-#[cfg(feature = "babybear")]
 pub type DefaultField = BabyBear;
-
-#[cfg(feature = "koalabear")]
-pub type DefaultField = KoalaBear;
-
-#[cfg(feature = "goldilocks")]
-pub type DefaultField = Goldilocks;
-
-#[cfg(feature = "teddybear")]
-pub type DefaultField = TeddyBear;
 

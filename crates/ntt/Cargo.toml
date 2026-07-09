@@ -3,13 +3,6 @@ name = "ntt"
 version.workspace = true
 edition.workspace = true
 
-[features]
-default = ["babybear"]
-babybear   = []
-koalabear  = []
-goldilocks = []
-teddybear  = []
-
 [dependencies]
 ark-ff.workspace = true
 ark-poly.workspace = true

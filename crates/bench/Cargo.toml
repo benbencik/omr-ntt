@@ -4,12 +4,6 @@ version.workspace = true
 edition.workspace = true
 description = "Criterion benchmarks and CSV sweep runner for NTT encoders."
 
-[features]
-default = ["babybear"]
-babybear   = ["ntt/babybear"]
-koalabear  = ["ntt/koalabear"]
-goldilocks = ["ntt/goldilocks"]
-
 [dependencies]
 ntt.workspace = true
 ark-ff.workspace = true
