@@ -4,7 +4,7 @@ use ntt::encoders::{
     Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
     WinterfellFourStep, WinterfellSplitRadix,
 };
-use rand::{Rng, SeedableRng, seq::index};
+use rand::SeedableRng;
 
 pub use ntt::encoder::{Input, NttDomain, NttEncoder};
 
@@ -40,15 +40,10 @@ impl BenchParams {
     }
 }
 
-pub fn gen_sparse_input<F: FftField>(params: &BenchParams, rng: &mut impl Rng) -> Input<F> {
-    let chosen = index::sample(rng, params.N, params.s);
-    let entries = chosen.into_iter().map(|idx| (idx, F::rand(rng))).collect();
-    Input::from_indexed(params.N, entries)
-}
-
-pub fn gen_sparse_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F> {
+pub fn gen_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F> {
     let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-    gen_sparse_input(params, &mut rng)
+    let v = (0..params.N).map(|_| F::rand(&mut rng)).collect();
+    Input::Full(v)
 }
 
 pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttEncoder<F>>> {

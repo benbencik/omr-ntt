@@ -1,5 +1,4 @@
-use ark_std::test_rng;
-use bench::{BenchParams, NttDomain, bench_encoders, gen_sparse_input};
+use bench::{BenchParams, NttDomain, bench_encoders, gen_input_seeded};
 use criterion::{Criterion, criterion_group, criterion_main};
 use ntt::DefaultField;
 
@@ -8,7 +7,7 @@ fn full_ntt_iter_n(c: &mut Criterion) {
         let n = params.N;
         let log_n = n.trailing_zeros();
         let domain = NttDomain::<DefaultField>::new(n);
-        let input = gen_sparse_input::<DefaultField>(&params, &mut test_rng());
+        let input = gen_input_seeded::<DefaultField>(&params, 42);
 
         let mut group = c.benchmark_group(format!("full_ntt_iter_n/N=2^{log_n}"));
         group.sample_size(10);
