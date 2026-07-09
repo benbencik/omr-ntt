@@ -6,7 +6,7 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 // Splits log_N layers at mid = ceil(log_N / 2).
 // First half: standard DIT on chunks of 2^mid (no cross-chunk sync).
@@ -16,15 +16,11 @@ pub struct Plonky3Radix2LayerSplit;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Plonky3Radix2LayerSplit {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
-        if N <= 1 {
-            return a;
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
+        if domain.N > 1 {
+            layer_split_ntt(buf, domain);
         }
-        layer_split_ntt(&mut a, domain);
-        a
     }
 
     fn name(&self) -> &str {

@@ -5,25 +5,22 @@
 
 use ark_ff::FftField;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 // N must be a power of 4 (log2(N) even).
 pub struct LambdaRadix4;
 
 impl<F: FftField> NttEncoder<F> for LambdaRadix4 {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
         assert!(
             domain.log_N % 2 == 0,
             "LambdaRadix4 requires N to be a power of 4 (log₂N even), got log₂N={}",
             domain.log_N
         );
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
-        in_place_nr_4radix_fft(&mut a, &domain.bitrev_twiddles);
-        derange(&mut a, domain.log_N);
-        a
+        assert_eq!(buf.len(), domain.N);
+        in_place_nr_4radix_fft(buf, &domain.bitrev_twiddles);
+        derange(buf, domain.log_N);
     }
 
     fn name(&self) -> &str {

@@ -10,21 +10,20 @@
 
 use ark_ff::FftField;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct TfheStockhamRadix8;
 
 impl<F: FftField> NttEncoder<F> for TfheStockhamRadix8 {
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
         assert!(
             domain.log_N % 3 == 0,
             "TfheStockhamRadix8 requires N to be a power of 8 (log₂N divisible by 3), got log₂N={}",
             domain.log_N
         );
-        let n = domain.N;
-        let a = input.to_dense();
-        assert_eq!(a.len(), n);
-        ntt_stockham_r8(&a, domain)
+        assert_eq!(buf.len(), domain.N);
+        let out = ntt_stockham_r8(buf, domain);
+        buf.copy_from_slice(&out);
     }
 
     fn name(&self) -> &str {

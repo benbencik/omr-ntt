@@ -4,7 +4,7 @@ pub mod encoders;
 pub mod fields;
 
 pub use encoder::{Input, NttDomain, NttEncoder};
-pub use fields::DefaultField;
+pub use fields::{DefaultField, Goldilocks};
 
 #[cfg(test)]
 mod tests {
@@ -24,25 +24,28 @@ mod tests {
 
     fn gen_sparse(n: usize, s: usize, rng: &mut impl rand::Rng) -> Input<DefaultField> {
         let chosen = index::sample(rng, n, s);
-        let entries: Vec<(usize, DefaultField)> = chosen
-            .into_iter()
-            .map(|idx| (idx, DefaultField::rand(rng)))
-            .collect();
-        Input::from_indexed(n, entries)
+        let mut v = vec![DefaultField::zero(); n];
+        for idx in chosen {
+            v[idx] = DefaultField::rand(rng);
+        }
+        v
     }
 
     fn assert_agrees_with_naive(encoder: &impl NttEncoder<DefaultField>) {
         let cases: &[(usize, usize)] = &[(64, 5), (256, 16), (512, 24), (1024, 32)];
         let mut rng = test_rng();
-        let naive = Naive;
 
         for &(n, s) in cases {
             let domain = NttDomain::<DefaultField>::new(n);
             let input = gen_sparse(n, s, &mut rng);
 
-            let expected_full = naive.ntt_full(&input, &domain);
-            let actual_full = encoder.ntt_full(&input, &domain);
-            assert_eq!(expected_full, actual_full, "{}: ntt_full mismatch at N={n}, s={s}", encoder.name());
+            let mut expected = input.clone();
+            Naive.ntt_full(&mut expected, &domain);
+
+            let mut actual = input;
+            encoder.ntt_full(&mut actual, &domain);
+
+            assert_eq!(expected, actual, "{}: ntt_full mismatch at N={n}, s={s}", encoder.name());
         }
     }
 
@@ -52,8 +55,8 @@ mod tests {
         let domain = NttDomain::<DefaultField>::new(n);
         let mut v = vec![DefaultField::zero(); n];
         v[0] = DefaultField::one();
-        let out = Naive.ntt_full(&Input::Full(v), &domain);
-        for (j, &w) in out.iter().enumerate() {
+        Naive.ntt_full(&mut v, &domain);
+        for (j, &w) in v.iter().enumerate() {
             assert_eq!(w, DefaultField::one(), "W[{j}] should be 1");
         }
     }
@@ -61,15 +64,13 @@ mod tests {
     #[test]
     fn one_coeff_at_index_1_gives_twiddles() {
         // x = [0, 1, 0, ..., 0]  =>  W[j] = omega^{1*j} = omega^j
-        // Directly verifies the twiddle exponent formula W[j] = sum_i x[i] * omega^{i*j}
         let n = 64usize;
         let domain = NttDomain::<DefaultField>::new(n);
         let mut v = vec![DefaultField::zero(); n];
         v[1] = DefaultField::one();
-        let out = Naive.ntt_full(&Input::Full(v), &domain);
+        Naive.ntt_full(&mut v, &domain);
         for j in 0..n {
-            let expected = domain.omega.pow([j as u64]);
-            assert_eq!(out[j], expected, "W[{j}] != omega^{j}");
+            assert_eq!(v[j], domain.omega.pow([j as u64]), "W[{j}] != omega^{j}");
         }
     }
 
@@ -78,25 +79,18 @@ mod tests {
         let n = 32usize;
         let domain = NttDomain::<DefaultField>::new(n);
         let mut rng = test_rng();
-        let x: Vec<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
-        let y: Vec<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
+        let x: Input<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
+        let y: Input<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
         let a = DefaultField::rand(&mut rng);
         let b = DefaultField::rand(&mut rng);
-        let xy: Vec<_> = x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
-        let ntt_xy = Naive.ntt_full(&Input::Full(xy), &domain);
-        let ntt_x = Naive.ntt_full(&Input::Full(x), &domain);
-        let ntt_y = Naive.ntt_full(&Input::Full(y), &domain);
-        let combined: Vec<_> = ntt_x.iter().zip(&ntt_y).map(|(&nx, &ny)| a * nx + b * ny).collect();
-        assert_eq!(ntt_xy, combined);
-    }
-
-    #[test]
-    fn sparse_and_dense_inputs_agree() {
-        let n = 128usize;
-        let domain = NttDomain::<DefaultField>::new(n);
-        let sparse = gen_sparse(n, 10, &mut test_rng());
-        let dense = Input::Full(sparse.to_dense());
-        assert_eq!(Naive.ntt_full(&sparse, &domain), Naive.ntt_full(&dense, &domain));
+        let mut xy: Input<DefaultField> = x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
+        let mut nx = x;
+        let mut ny = y;
+        Naive.ntt_full(&mut xy, &domain);
+        Naive.ntt_full(&mut nx, &domain);
+        Naive.ntt_full(&mut ny, &domain);
+        let combined: Vec<_> = nx.iter().zip(&ny).map(|(&nxi, &nyi)| a * nxi + b * nyi).collect();
+        assert_eq!(xy, combined);
     }
 
     #[test]
@@ -142,9 +136,11 @@ mod tests {
         for &(n, s) in cases {
             let domain = NttDomain::<DefaultField>::new(n);
             let input = gen_sparse(n, s, &mut rng);
-            let expected_full = naive.ntt_full(&input, &domain);
-            let actual_full = LambdaRadix4.ntt_full(&input, &domain);
-            assert_eq!(expected_full, actual_full, "LambdaRadix4: ntt_full mismatch at N={n}");
+            let mut expected = input.clone();
+            Naive.ntt_full(&mut expected, &domain);
+            let mut actual = input;
+            LambdaRadix4.ntt_full(&mut actual, &domain);
+            assert_eq!(expected, actual, "LambdaRadix4: ntt_full mismatch at N={n}");
         }
     }
 
@@ -157,8 +153,10 @@ mod tests {
         for &(n, s) in cases {
             let domain = NttDomain::<DefaultField>::new(n);
             let input = gen_sparse(n, s.min(n / 2), &mut rng);
-            let expected = naive.ntt_full(&input, &domain);
-            let actual = TfheStockhamRadix8.ntt_full(&input, &domain);
+            let mut expected = input.clone();
+            Naive.ntt_full(&mut expected, &domain);
+            let mut actual = input;
+            TfheStockhamRadix8.ntt_full(&mut actual, &domain);
             assert_eq!(expected, actual, "TfheStockhamRadix8: mismatch at N={n}");
         }
     }

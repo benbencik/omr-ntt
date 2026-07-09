@@ -5,18 +5,22 @@
 //            (Math. Comput., 1965)
 
 use ark_ff::FftField;
+use rayon::prelude::*;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
+
+// Parallel threshold: below this size recurse sequentially to avoid rayon overhead.
+const PAR_THRESHOLD: usize = 1 << 12;
 
 // Out-of-place recursive even/odd split; no bit-reversal permutation needed.
 // Allocates O(N log N) memory total across all recursion levels.
 pub struct ArkRadix2Rec;
 
-impl<F: FftField> NttEncoder<F> for ArkRadix2Rec {
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let a = input.to_dense();
-        assert_eq!(a.len(), domain.N);
-        ntt_rec(&a, &domain.twiddles)
+impl<F: FftField + Send + Sync> NttEncoder<F> for ArkRadix2Rec {
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
+        let out = ntt_rec(buf, &domain.twiddles);
+        buf.copy_from_slice(&out);
     }
 
     fn name(&self) -> &str {
@@ -24,10 +28,9 @@ impl<F: FftField> NttEncoder<F> for ArkRadix2Rec {
     }
 }
 
-// Ported from ark-transforms ntt_rec + ScalarCombine::combine.
 // twiddles[j] = omega_n^j for j in 0..n/2.
 // Sub-twiddles for size n/2 are every-other element: omega_{n/2}^k = omega_n^{2k}.
-fn ntt_rec<F: FftField>(input: &[F], twiddles: &[F]) -> Vec<F> {
+fn ntt_rec<F: FftField + Send + Sync>(input: &[F], twiddles: &[F]) -> Vec<F> {
     let n = input.len();
     debug_assert!(n.is_power_of_two());
     if n == 1 {
@@ -37,33 +40,29 @@ fn ntt_rec<F: FftField>(input: &[F], twiddles: &[F]) -> Vec<F> {
 
     let half = n / 2;
 
-    let mut even = vec![F::zero(); half];
-    let mut odd = vec![F::zero(); half];
-    let mut i = 0;
-    while i < half {
-        even[i] = input[2 * i];
-        odd[i] = input[2 * i + 1];
-        i += 1;
+    let mut even = Vec::with_capacity(half);
+    let mut odd = Vec::with_capacity(half);
+    for i in 0..half {
+        even.push(input[2 * i]);
+        odd.push(input[2 * i + 1]);
     }
 
-    let mut sub_twiddles = vec![F::zero(); half / 2];
-    let mut k = 0;
-    while k < half / 2 {
-        sub_twiddles[k] = twiddles[2 * k];
-        k += 1;
-    }
+    let sub_twiddles: Vec<F> = twiddles.iter().step_by(2).copied().collect();
 
-    let even_ntt = ntt_rec(&even, &sub_twiddles);
-    let odd_ntt = ntt_rec(&odd, &sub_twiddles);
+    let (even_ntt, odd_ntt) = if n > PAR_THRESHOLD {
+        rayon::join(
+            || ntt_rec(&even, &sub_twiddles),
+            || ntt_rec(&odd, &sub_twiddles),
+        )
+    } else {
+        (ntt_rec(&even, &sub_twiddles), ntt_rec(&odd, &sub_twiddles))
+    };
 
-    // ScalarCombine::combine
     let mut out = vec![F::zero(); n];
-    let mut j = 0;
-    while j < half {
+    for j in 0..half {
         let t = twiddles[j] * odd_ntt[j];
         out[j] = even_ntt[j] + t;
         out[j + half] = even_ntt[j] - t;
-        j += 1;
     }
     out
 }

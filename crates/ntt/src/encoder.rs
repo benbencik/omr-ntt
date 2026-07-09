@@ -1,56 +1,9 @@
 use ark_ff::{FftField, Field};
 
-/// Input vector for an NTT
-#[derive(Clone, Debug)]
-pub enum Input<F: Field> {
-    Full(Vec<F>),
-    Indexed { n: usize, entries: Vec<(usize, F)> },
-}
-
-impl<F: Field> Input<F> {
-    pub fn n(&self) -> usize {
-        match self {
-            Self::Full(v) => v.len(),
-            Self::Indexed { n, .. } => *n,
-        }
-    }
-
-    pub fn from_indexed(n: usize, entries: Vec<(usize, F)>) -> Self {
-        Self::Indexed { n, entries }
-    }
-
-    pub fn to_dense(&self) -> Vec<F> {
-        match self {
-            Self::Full(v) => v.clone(),
-            Self::Indexed { n, entries } => {
-                let mut v = vec![F::zero(); *n];
-                for &(i, ref val) in entries {
-                    debug_assert!(i < *n, "indexed entry {i} >= n={n}");
-                    v[i] += *val;
-                }
-                v
-            }
-        }
-    }
-
-    /// Returns (index, value) pairs for all nonzero entries
-    pub fn to_indexed_entries(&self) -> Vec<(usize, F)> {
-        match self {
-            Self::Full(v) => v
-                .iter()
-                .enumerate()
-                .filter(|(_, x)| !x.is_zero())
-                .map(|(i, &x)| (i, x))
-                .collect(),
-            Self::Indexed { entries, .. } => entries.clone(),
-        }
-    }
-}
+/// Dense input vector for an NTT of known size N.
+pub type Input<F> = Vec<F>;
 
 /// Reusable NTT parameters
-// Mirrors Plonky3's VectorPair: both natural-order and bit-reversed twiddles are
-// precomputed once so encoders that need bitrev_twiddles (e.g. Plonky3LayerSplitNtt,
-// Radix4Ntt, WinterfellNtt) do not recompute them on every call.
 #[allow(non_snake_case)]
 #[derive(Clone, Debug)]
 pub struct NttDomain<F: FftField> {
@@ -107,14 +60,14 @@ pub(crate) fn powers<F: Field>(count: usize, base: F) -> Vec<F> {
 }
 
 pub trait NttEncoder<F: FftField>: Send + Sync {
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F>;
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>);
     // TODO: add `ntt_partial` each encode will need its own pruned implementation
     fn name(&self) -> &str;
 }
 
 impl<F: FftField, E: NttEncoder<F> + ?Sized> NttEncoder<F> for Box<E> {
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        (**self).ntt_full(input, domain)
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        (**self).ntt_full(buf, domain)
     }
     fn name(&self) -> &str {
         (**self).name()

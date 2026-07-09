@@ -1,5 +1,5 @@
 use bench::{BenchParams, NttDomain, bench_encoders, gen_input_seeded};
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use ntt::DefaultField;
 
 fn full_ntt_iter_s(c: &mut Criterion) {
@@ -15,7 +15,7 @@ fn full_ntt_iter_s(c: &mut Criterion) {
 
         for encoder in bench_encoders::<DefaultField>(n) {
             group.bench_function(encoder.name(), |b| {
-                b.iter(|| encoder.ntt_full(&input, &domain))
+                b.iter_batched(|| input.clone(), |mut buf| encoder.ntt_full(&mut buf, &domain), BatchSize::LargeInput)
             });
         }
         group.finish();

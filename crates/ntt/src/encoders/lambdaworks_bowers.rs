@@ -5,20 +5,17 @@
 
 use ark_ff::FftField;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct LambdaBowers;
 
 impl<F: FftField> NttEncoder<F> for LambdaBowers {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
         let layers = layer_twiddles(domain);
-        bowers_fft_opt_fused(&mut a, &layers);
-        derange(&mut a, domain.log_N);
-        a
+        bowers_fft_opt_fused(buf, &layers);
+        derange(buf, domain.log_N);
     }
 
     fn name(&self) -> &str {

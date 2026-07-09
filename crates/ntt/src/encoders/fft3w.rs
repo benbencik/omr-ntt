@@ -17,7 +17,7 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 const BLOCK: usize = 64;
 
@@ -25,14 +25,11 @@ pub struct Fft3w;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Fft3w {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
-        if N >= 2 {
-            four_step(&mut a, domain);
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
+        if domain.N >= 2 {
+            four_step(buf, domain);
         }
-        a
     }
 
     fn name(&self) -> &str {

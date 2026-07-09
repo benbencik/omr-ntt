@@ -5,19 +5,16 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 // Each butterfly stage uses par_chunks_mut (rayon); chunks at a given stage are independent.
 pub struct Plonky3Radix2DitParallel;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Plonky3Radix2DitParallel {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
-        ntt_in_place_parallel(&mut a, domain);
-        a
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
+        ntt_in_place_parallel(buf, domain);
     }
 
     fn name(&self) -> &str {

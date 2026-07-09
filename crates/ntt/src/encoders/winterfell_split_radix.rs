@@ -5,22 +5,18 @@
 
 use ark_ff::FftField;
 
-use crate::encoder::{Input, NttDomain, NttEncoder};
+use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct WinterfellSplitRadix;
 
 impl<F: FftField> NttEncoder<F> for WinterfellSplitRadix {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, input: &Input<F>, domain: &NttDomain<F>) -> Vec<F> {
-        let N = domain.N;
-        let mut a = input.to_dense();
-        assert_eq!(a.len(), N);
-        if N <= 1 {
-            return a;
+    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        assert_eq!(buf.len(), domain.N);
+        if domain.N > 1 {
+            fft_in_place(buf, &domain.bitrev_twiddles, 1, 1, 0);
+            derange(buf, domain.log_N);
         }
-        fft_in_place(&mut a, &domain.bitrev_twiddles, 1, 1, 0);
-        derange(&mut a, domain.log_N);
-        a
     }
 
     fn name(&self) -> &str {
