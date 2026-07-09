@@ -37,9 +37,17 @@ impl<F: FftField> NttDomain<F> {
         let twiddles = powers(N / 2, omega);
         let bitrev_twiddles = {
             let log_half = log_N - 1;
-            (0..N / 2).map(|i| twiddles[bitrev(i as u64, log_half) as usize]).collect()
+            (0..N / 2)
+                .map(|i| twiddles[bitrev(i as u64, log_half) as usize])
+                .collect()
         };
-        Self { N, log_N, omega, twiddles, bitrev_twiddles }
+        Self {
+            N,
+            log_N,
+            omega,
+            twiddles,
+            bitrev_twiddles,
+        }
     }
 }
 

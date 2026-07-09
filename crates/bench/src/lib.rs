@@ -1,8 +1,7 @@
 use ark_ff::FftField;
 use ntt::encoders::{
-    ArkRadix2, ArkRadix2Rec, LambdaBowers, LambdaRadix4, Naive, Fft3w,
-    Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
-    WinterfellFourStep, WinterfellSplitRadix,
+    ArkRadix2, ArkRadix2Rec, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
+    Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep, WinterfellSplitRadix,
 };
 use rand::SeedableRng;
 
@@ -31,7 +30,10 @@ impl BenchParams {
 
     pub fn n_iter(log_ns: &[u32]) -> Vec<Self> {
         const S: usize = 1000; // fix to s 1000 (arbitrary) 
-        log_ns.iter().map(|&log_n| Self::new(1 << log_n, S)).collect()
+        log_ns
+            .iter()
+            .map(|&log_n| Self::new(1 << log_n, S))
+            .collect()
     }
 
     pub fn s_iter(s_values: &[usize]) -> Vec<Self> {
@@ -50,7 +52,6 @@ pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttE
     vec![
         Box::new(Naive),
         Box::new(ArkRadix2),
-
         Box::new(ArkRadix2Rec),
         Box::new(LambdaBowers),
         Box::new(WinterfellSplitRadix),

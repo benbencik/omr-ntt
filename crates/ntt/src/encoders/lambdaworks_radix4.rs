@@ -28,7 +28,6 @@ impl<F: FftField> NttEncoder<F> for LambdaRadix4 {
     }
 }
 
-
 // Input in natural order, output in bit-reversed order; caller applies derange.
 // Twiddles must be in bit-reversed order.
 // Ported from lambdaworks-math, fft.rs in_place_nr_4radix_fft

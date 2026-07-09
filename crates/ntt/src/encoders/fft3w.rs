@@ -45,18 +45,20 @@ fn four_step<F: FftField + Send + Sync>(data: &mut [F], domain: &NttDomain<F>) {
     let log_N = N.trailing_zeros() as usize;
     let log_n1 = log_N / 2;
     let n1 = 1usize << log_n1; // ≤ sqrt(N)
-    let n2 = N / n1;           // ≥ n1; equals n1 iff log_N even
+    let n2 = N / n1; // ≥ n1; equals n1 iff log_N even
 
     // Steps 1–3: column FFTs via transpose → row FFTs → transpose back
     transpose(data, n1, n2);
-    data.par_chunks_mut(n1).for_each(|row| base_dit_ntt(row, domain));
+    data.par_chunks_mut(n1)
+        .for_each(|row| base_dit_ntt(row, domain));
     transpose(data, n2, n1);
 
     // Step 4: twiddle multiply  ω^(i·j) for i∈1..n1, j∈1..n2
     twiddle_multiply(data, n1, n2, domain);
 
     // Step 5: row FFTs
-    data.par_chunks_mut(n2).for_each(|row| base_dit_ntt(row, domain));
+    data.par_chunks_mut(n2)
+        .for_each(|row| base_dit_ntt(row, domain));
 
     // Step 6: final transpose → natural output order
     transpose(data, n1, n2);
@@ -68,7 +70,7 @@ fn four_step<F: FftField + Send + Sync>(data: &mut [F], domain: &NttDomain<F>) {
 fn twiddle_multiply<F: FftField>(data: &mut [F], n1: usize, n2: usize, domain: &NttDomain<F>) {
     for i in 1..n1 {
         let tw_base = domain.twiddles[i]; // ω^i
-        let mut tw = tw_base;             // ω^(i·1)
+        let mut tw = tw_base; // ω^(i·1)
         let row = i * n2;
         for j in 1..n2 {
             data[row + j] *= tw;

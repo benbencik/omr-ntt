@@ -12,15 +12,14 @@ mod tests {
     use ark_std::test_rng;
     use rand::seq::index;
 
+    use crate::fields::DefaultField;
     use crate::{
         encoder::{Input, NttDomain, NttEncoder},
         encoders::{
-            ArkRadix2, LambdaBowers, LambdaRadix4, Naive, Fft3w,
-            Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
-            WinterfellFourStep, WinterfellSplitRadix,
+            ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
+            Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep, WinterfellSplitRadix,
         },
     };
-    use crate::fields::DefaultField;
 
     fn gen_sparse(n: usize, s: usize, rng: &mut impl rand::Rng) -> Input<DefaultField> {
         let chosen = index::sample(rng, n, s);
@@ -45,7 +44,12 @@ mod tests {
             let mut actual = input;
             encoder.ntt_full(&mut actual, &domain);
 
-            assert_eq!(expected, actual, "{}: ntt_full mismatch at N={n}, s={s}", encoder.name());
+            assert_eq!(
+                expected,
+                actual,
+                "{}: ntt_full mismatch at N={n}, s={s}",
+                encoder.name()
+            );
         }
     }
 
@@ -83,13 +87,18 @@ mod tests {
         let y: Input<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
         let a = DefaultField::rand(&mut rng);
         let b = DefaultField::rand(&mut rng);
-        let mut xy: Input<DefaultField> = x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
+        let mut xy: Input<DefaultField> =
+            x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
         let mut nx = x;
         let mut ny = y;
         Naive.ntt_full(&mut xy, &domain);
         Naive.ntt_full(&mut nx, &domain);
         Naive.ntt_full(&mut ny, &domain);
-        let combined: Vec<_> = nx.iter().zip(&ny).map(|(&nxi, &nyi)| a * nxi + b * nyi).collect();
+        let combined: Vec<_> = nx
+            .iter()
+            .zip(&ny)
+            .map(|(&nxi, &nyi)| a * nxi + b * nyi)
+            .collect();
         assert_eq!(xy, combined);
     }
 

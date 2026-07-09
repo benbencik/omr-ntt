@@ -78,14 +78,14 @@ fn butterfly8<F: FftField>(y: [F; 8], imag: F, w8: F, v8: F) -> [F; 8] {
     let s15_p_is37 = s15 + i_s37;
 
     [
-        a04_p_a26 + a15_p_a37,             // DFT[0]
-        s04_m_is26 + w8 * s15_m_is37,      // DFT[1]
-        a04_m_a26 - i_a15_m_a37,           // DFT[2]
-        s04_p_is26 - v8 * s15_p_is37,      // DFT[3]
-        a04_p_a26 - a15_p_a37,             // DFT[4]
-        s04_m_is26 - w8 * s15_m_is37,      // DFT[5]
-        a04_m_a26 + i_a15_m_a37,           // DFT[6]
-        s04_p_is26 + v8 * s15_p_is37,      // DFT[7]
+        a04_p_a26 + a15_p_a37,        // DFT[0]
+        s04_m_is26 + w8 * s15_m_is37, // DFT[1]
+        a04_m_a26 - i_a15_m_a37,      // DFT[2]
+        s04_p_is26 - v8 * s15_p_is37, // DFT[3]
+        a04_p_a26 - a15_p_a37,        // DFT[4]
+        s04_m_is26 - w8 * s15_m_is37, // DFT[5]
+        a04_m_a26 + i_a15_m_a37,      // DFT[6]
+        s04_p_is26 + v8 * s15_p_is37, // DFT[7]
     ]
 }
 

@@ -15,7 +15,11 @@ fn full_ntt_iter_s(c: &mut Criterion) {
 
         for encoder in bench_encoders::<DefaultField>(n) {
             group.bench_function(encoder.name(), |b| {
-                b.iter_batched(|| input.clone(), |mut buf| encoder.ntt_full(&mut buf, &domain), BatchSize::LargeInput)
+                b.iter_batched(
+                    || input.clone(),
+                    |mut buf| encoder.ntt_full(&mut buf, &domain),
+                    BatchSize::LargeInput,
+                )
             });
         }
         group.finish();

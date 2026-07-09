@@ -24,7 +24,6 @@ impl<F: FftField> NttEncoder<F> for WinterfellSplitRadix {
     }
 }
 
-
 // Twiddles must be in bit-reversed order (br[i] = omega^bitrev(i, log_N-1)).
 // When stride == count and count < MAX_LOOP, butterflies are batched across columns.
 // Ported from winterfell/math, fft_inputs.rs fft_in_place (adapted from OpenZKP)
@@ -58,7 +57,11 @@ fn fft_in_place<F: FftField>(
 
     // Twiddle butterflies: multiply upper element first, then add/sub.
     let last_offset = offset + size * stride;
-    for (idx, off) in (offset..last_offset).step_by(2 * stride).enumerate().skip(1) {
+    for (idx, off) in (offset..last_offset)
+        .step_by(2 * stride)
+        .enumerate()
+        .skip(1)
+    {
         let tw = twiddles[idx];
         for j in off..(off + count) {
             let t = values[j];

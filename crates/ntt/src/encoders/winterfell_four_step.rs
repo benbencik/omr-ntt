@@ -59,21 +59,23 @@ fn split_radix_fft_parallel<F: FftField + Send + Sync>(values: &mut [F], twiddle
     transpose_square_stretch(values, inner_len, stretch);
 
     // Step 4: four-step twiddle multiply + parallel outer FFTs
-    values.par_chunks_mut(outer_len).enumerate().for_each(|(i, row)| {
-        if i > 0 {
-            // permute_index(inner_len, i) = bitrev(i, log_inner)
-            let i_perm = bitrev(i as u64, log_inner) as usize;
-            let inner_tw: F = g.pow([i_perm as u64]);
-            let mut outer_tw = inner_tw;
-            for element in row.iter_mut().skip(1) {
-                *element *= outer_tw;
-                outer_tw *= inner_tw;
+    values
+        .par_chunks_mut(outer_len)
+        .enumerate()
+        .for_each(|(i, row)| {
+            if i > 0 {
+                // permute_index(inner_len, i) = bitrev(i, log_inner)
+                let i_perm = bitrev(i as u64, log_inner) as usize;
+                let inner_tw: F = g.pow([i_perm as u64]);
+                let mut outer_tw = inner_tw;
+                for element in row.iter_mut().skip(1) {
+                    *element *= outer_tw;
+                    outer_tw *= inner_tw;
+                }
             }
-        }
-        fft_in_place(row, twiddles, 1, 1, 0);
-    });
+            fft_in_place(row, twiddles, 1, 1, 0);
+        });
 }
-
 
 // Recursive split-radix FFT producing bit-reversed output.
 // Ported from winterfell/math, fft_inputs.rs fft_in_place (adapted from OpenZKP)
@@ -107,7 +109,11 @@ fn fft_in_place<F: FftField>(
 
     // Twiddle butterflies: multiply upper element first, then add/sub
     let last_offset = offset + size * stride;
-    for (idx, off) in (offset..last_offset).step_by(2 * stride).enumerate().skip(1) {
+    for (idx, off) in (offset..last_offset)
+        .step_by(2 * stride)
+        .enumerate()
+        .skip(1)
+    {
         let tw = twiddles[idx];
         for j in off..(off + count) {
             let t = values[j];

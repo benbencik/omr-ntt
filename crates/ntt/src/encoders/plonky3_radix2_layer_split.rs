@@ -72,24 +72,26 @@ fn layer_split_ntt<F: FftField + Send + Sync>(a: &mut [F], domain: &NttDomain<F>
     // Each block uses ONE twiddle: bitrev_twiddles[global_block_index]
     {
         let chunk_size_2 = 1 << (log_n - mid);
-        a.par_chunks_mut(chunk_size_2).enumerate().for_each(|(thread, chunk)| {
-            for layer in mid..log_n {
-                let first_block = thread << (layer - mid);
-                let layer_rev = log_n - 1 - layer;
-                let half_block = 1 << layer_rev;
-                let block_size = half_block * 2;
-                for (b, block) in chunk.chunks_mut(block_size).enumerate() {
-                    let tw = bitrev_twiddles[first_block + b];
-                    let (lo, hi) = block.split_at_mut(half_block);
-                    for (l, h) in lo.iter_mut().zip(hi.iter_mut()) {
-                        let lo_val = *l;
-                        let hi_val = *h * tw;
-                        *l = lo_val + hi_val;
-                        *h = lo_val - hi_val;
+        a.par_chunks_mut(chunk_size_2)
+            .enumerate()
+            .for_each(|(thread, chunk)| {
+                for layer in mid..log_n {
+                    let first_block = thread << (layer - mid);
+                    let layer_rev = log_n - 1 - layer;
+                    let half_block = 1 << layer_rev;
+                    let block_size = half_block * 2;
+                    for (b, block) in chunk.chunks_mut(block_size).enumerate() {
+                        let tw = bitrev_twiddles[first_block + b];
+                        let (lo, hi) = block.split_at_mut(half_block);
+                        for (l, h) in lo.iter_mut().zip(hi.iter_mut()) {
+                            let lo_val = *l;
+                            let hi_val = *h * tw;
+                            *l = lo_val + hi_val;
+                            *h = lo_val - hi_val;
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
     // Step 5: final bit-reverse to restore natural order
