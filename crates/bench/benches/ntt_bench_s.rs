@@ -4,7 +4,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use ntt::DefaultField;
 
 fn full_ntt_iter_s(c: &mut Criterion) {
-    for params in BenchParams::n_iter(&[100, 500, 1000, 2000, 5000]) {
+    for params in BenchParams::s_iter(&[100, 500, 1000, 2000, 5000]) {
         let n = params.N;
         let s = params.s;
         let log_n = n.trailing_zeros();

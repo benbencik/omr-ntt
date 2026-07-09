@@ -29,13 +29,13 @@ impl BenchParams {
         Self { N, s, k }
     }
 
-    pub fn n_sweep(log_ns: &[u32]) -> Vec<Self> {
-        const S: usize = 1000;
+    pub fn n_iter(log_ns: &[u32]) -> Vec<Self> {
+        const S: usize = 1000; // fix to s 1000 (arbitrary) 
         log_ns.iter().map(|&log_n| Self::new(1 << log_n, S)).collect()
     }
 
-    pub fn n_iter(s_values: &[usize]) -> Vec<Self> {
-        const LOG_N: u32 = 20;
+    pub fn s_iter(s_values: &[usize]) -> Vec<Self> {
+        const LOG_N: u32 = 22; // fix to logn 22 (arbitrary)
         s_values.iter().map(|&s| Self::new(1 << LOG_N, s)).collect()
     }
 }
