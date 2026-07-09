@@ -1,6 +1,6 @@
 use ark_ff::FftField;
 use ntt::encoders::{
-    ArkRadix2, ArkRadix2Rec, LambdaBowers, LambdaRadix4, Naive,
+    ArkRadix2, ArkRadix2Rec, LambdaBowers, LambdaRadix4, Naive, Fft3w,
     Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
     WinterfellFourStep, WinterfellSplitRadix,
 };
@@ -64,6 +64,7 @@ pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttE
         Box::new(Plonky3Radix2LayerSplit),
         Box::new(LambdaRadix4),
         Box::new(TfheStockhamRadix8),
+        Box::new(Fft3w),
     ]
 }
 
@@ -73,13 +74,13 @@ pub fn bench_encoders<F: FftField + Send + Sync>(N: usize) -> Vec<Box<dyn NttEnc
     let log_n = N.trailing_zeros();
     let mut v: Vec<Box<dyn NttEncoder<F>>> = vec![
         Box::new(ArkRadix2),
-
         Box::new(ArkRadix2Rec),
         Box::new(LambdaBowers),
         Box::new(WinterfellSplitRadix),
         Box::new(WinterfellFourStep),
         Box::new(Plonky3Radix2DitParallel),
         Box::new(Plonky3Radix2LayerSplit),
+        Box::new(Fft3w),
     ];
     if log_n % 2 == 0 {
         v.push(Box::new(LambdaRadix4));

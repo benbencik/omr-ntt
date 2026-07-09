@@ -9,6 +9,7 @@ mod plonky3_radix2_dit_parallel;
 mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
 mod winterfell_split_radix;
+mod fft3w;
 mod winterfell_four_step;
 
 pub use ark_radix2::ArkRadix2;
@@ -19,5 +20,6 @@ pub use naive::Naive;
 pub use plonky3_radix2_dit_parallel::Plonky3Radix2DitParallel;
 pub use plonky3_radix2_layer_split::Plonky3Radix2LayerSplit;
 pub use tfhe_stockham_radix8::TfheStockhamRadix8;
+pub use fft3w::Fft3w;
 pub use winterfell_four_step::WinterfellFourStep;
 pub use winterfell_split_radix::WinterfellSplitRadix;

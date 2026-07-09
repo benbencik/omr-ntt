@@ -15,7 +15,7 @@ mod tests {
     use crate::{
         encoder::{Input, NttDomain, NttEncoder},
         encoders::{
-            ArkRadix2, LambdaBowers, LambdaRadix4, Naive,
+            ArkRadix2, LambdaBowers, LambdaRadix4, Naive, Fft3w,
             Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
             WinterfellFourStep, WinterfellSplitRadix,
         },
@@ -122,6 +122,11 @@ mod tests {
     #[test]
     fn winterfell_four_step_agrees_with_naive() {
         assert_agrees_with_naive(&WinterfellFourStep);
+    }
+
+    #[test]
+    fn fft3w_agrees_with_naive() {
+        assert_agrees_with_naive(&Fft3w);
     }
 
     #[test]
