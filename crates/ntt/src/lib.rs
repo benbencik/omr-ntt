@@ -17,7 +17,8 @@ mod tests {
         encoder::{Input, NttDomain, NttEncoder},
         encoders::{
             ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
-            Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep, WinterfellSplitRadix,
+            Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep,
+            WinterfellFourStepPartial, WinterfellSplitRadix,
         },
     };
 
@@ -39,15 +40,40 @@ mod tests {
             let input = gen_sparse(n, s, &mut rng);
 
             let mut expected = input.clone();
-            Naive.ntt_full(&mut expected, &domain);
+            Naive.ntt(&mut expected, &domain);
 
             let mut actual = input;
-            encoder.ntt_full(&mut actual, &domain);
+            encoder.ntt(&mut actual, &domain);
 
             assert_eq!(
                 expected,
                 actual,
-                "{}: ntt_full mismatch at N={n}, s={s}",
+                "{}: ntt mismatch at N={n}, s={s}",
+                encoder.name()
+            );
+        }
+    }
+
+    fn assert_prefix_agrees_with_naive(encoder: &impl NttEncoder<DefaultField>) {
+        let s = encoder.s().expect("partial encoder must report s");
+        let cases: &[usize] = &[64, 256, 1024];
+        let mut rng = test_rng();
+
+        for &n in cases {
+            let m = (2 * s).min(n);
+            let domain = NttDomain::<DefaultField>::new(n);
+            let input: Vec<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
+
+            let mut expected = input.clone();
+            Naive.ntt(&mut expected, &domain);
+
+            let mut actual = input;
+            encoder.ntt(&mut actual, &domain);
+
+            assert_eq!(
+                &actual[..m],
+                &expected[..m],
+                "{}: first {m} outputs mismatch at N={n}",
                 encoder.name()
             );
         }
@@ -59,7 +85,7 @@ mod tests {
         let domain = NttDomain::<DefaultField>::new(n);
         let mut v = vec![DefaultField::zero(); n];
         v[0] = DefaultField::one();
-        Naive.ntt_full(&mut v, &domain);
+        Naive.ntt(&mut v, &domain);
         for (j, &w) in v.iter().enumerate() {
             assert_eq!(w, DefaultField::one(), "W[{j}] should be 1");
         }
@@ -72,7 +98,7 @@ mod tests {
         let domain = NttDomain::<DefaultField>::new(n);
         let mut v = vec![DefaultField::zero(); n];
         v[1] = DefaultField::one();
-        Naive.ntt_full(&mut v, &domain);
+        Naive.ntt(&mut v, &domain);
         for j in 0..n {
             assert_eq!(v[j], domain.omega.pow([j as u64]), "W[{j}] != omega^{j}");
         }
@@ -91,9 +117,9 @@ mod tests {
             x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
         let mut nx = x;
         let mut ny = y;
-        Naive.ntt_full(&mut xy, &domain);
-        Naive.ntt_full(&mut nx, &domain);
-        Naive.ntt_full(&mut ny, &domain);
+        Naive.ntt(&mut xy, &domain);
+        Naive.ntt(&mut nx, &domain);
+        Naive.ntt(&mut ny, &domain);
         let combined: Vec<_> = nx
             .iter()
             .zip(&ny)
@@ -141,15 +167,14 @@ mod tests {
     fn lambda_radix4_agrees_with_naive() {
         let cases: &[(usize, usize)] = &[(64, 5), (256, 16), (1024, 32)];
         let mut rng = test_rng();
-        let naive = Naive;
         for &(n, s) in cases {
             let domain = NttDomain::<DefaultField>::new(n);
             let input = gen_sparse(n, s, &mut rng);
             let mut expected = input.clone();
-            Naive.ntt_full(&mut expected, &domain);
+            Naive.ntt(&mut expected, &domain);
             let mut actual = input;
-            LambdaRadix4.ntt_full(&mut actual, &domain);
-            assert_eq!(expected, actual, "LambdaRadix4: ntt_full mismatch at N={n}");
+            LambdaRadix4.ntt(&mut actual, &domain);
+            assert_eq!(expected, actual, "LambdaRadix4: ntt mismatch at N={n}");
         }
     }
 
@@ -158,15 +183,19 @@ mod tests {
     fn tfhe_stockham_radix8_agrees_with_naive() {
         let cases: &[(usize, usize)] = &[(8, 3), (512, 24)];
         let mut rng = test_rng();
-        let naive = Naive;
         for &(n, s) in cases {
             let domain = NttDomain::<DefaultField>::new(n);
             let input = gen_sparse(n, s.min(n / 2), &mut rng);
             let mut expected = input.clone();
-            Naive.ntt_full(&mut expected, &domain);
+            Naive.ntt(&mut expected, &domain);
             let mut actual = input;
-            TfheStockhamRadix8.ntt_full(&mut actual, &domain);
+            TfheStockhamRadix8.ntt(&mut actual, &domain);
             assert_eq!(expected, actual, "TfheStockhamRadix8: mismatch at N={n}");
         }
+    }
+
+    #[test]
+    fn winterfell_four_step_partial_agrees_with_naive() {
+        assert_prefix_agrees_with_naive(&WinterfellFourStepPartial);
     }
 }

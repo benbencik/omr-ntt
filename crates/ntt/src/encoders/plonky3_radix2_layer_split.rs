@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Layer-split parallel DIT NTT (DIT first half + Bowers G^T second half)
 // Source project: Plonky3
 // Source path: dft/src/radix_2_dit_parallel.rs -- Radix2DitParallel::dft_batch
@@ -16,11 +17,8 @@ pub struct Plonky3Radix2LayerSplit;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Plonky3Radix2LayerSplit {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
-        if domain.N > 1 {
-            layer_split_ntt(buf, domain);
-        }
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        layer_split_ntt(buf, domain);
     }
 
     fn name(&self) -> &str {

@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Cache-oblivious four-step NTT
 // Source: oxifft/src/dft/solvers/cache_oblivious.rs (Frigo/Johnson, FFTW3)
 // Ported from Complex<f64> to F: FftField.
@@ -25,8 +26,7 @@ pub struct Fft3w;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Fft3w {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         if domain.N >= 2 {
             four_step(buf, domain);
         }

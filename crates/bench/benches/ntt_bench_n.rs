@@ -16,7 +16,7 @@ fn full_ntt_iter_n(c: &mut Criterion) {
             group.bench_function(encoder.name(), |b| {
                 b.iter_batched(
                     || input.clone(),
-                    |mut buf| encoder.ntt_full(&mut buf, &domain),
+                    |mut buf| encoder.ntt(&mut buf, &domain),
                     BatchSize::LargeInput,
                 )
             });

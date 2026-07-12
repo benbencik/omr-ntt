@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Radix-4 NR DIT NTT (natural-order input, bit-reversed output)
 // Source project: lambdaworks-math
 // Source path: crates/math/src/fft/cpu/fft.rs -- in_place_nr_4radix_fft
@@ -12,13 +13,12 @@ pub struct LambdaRadix4;
 
 impl<F: FftField> NttEncoder<F> for LambdaRadix4 {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         assert!(
             domain.log_N % 2 == 0,
             "LambdaRadix4 requires N to be a power of 4 (log₂N even), got log₂N={}",
             domain.log_N
         );
-        assert_eq!(buf.len(), domain.N);
         in_place_nr_4radix_fft(buf, &domain.bitrev_twiddles);
         derange(buf, domain.log_N);
     }

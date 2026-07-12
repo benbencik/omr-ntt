@@ -7,8 +7,8 @@ use rand::{Rng, SeedableRng};
 use winter_math::fft::{evaluate_poly, get_twiddles};
 use winter_math::fields::f64::BaseElement as WinterGold;
 
-// Common field: Goldilocks 
-const P: u64 = 18446744069414584321; 
+// Common field: Goldilocks
+const P: u64 = 18446744069414584321;
 
 fn bench_extern_ntt(c: &mut Criterion) {
     for params in BenchParams::n_iter(&[22, 24, 27]) {
@@ -18,13 +18,14 @@ fn bench_extern_ntt(c: &mut Criterion) {
 
         let input_tfhe: Vec<u64> = (0..n).map(|_| rng.r#gen::<u64>() % P).collect();
         let input_p3: Vec<P3Gold> = input_tfhe.iter().map(|&x| P3Gold::new(x)).collect();
-        let input_winterfell: Vec<WinterGold> = input_tfhe.iter().map(|&x| WinterGold::new(x)).collect();
+        let input_winterfell: Vec<WinterGold> =
+            input_tfhe.iter().map(|&x| WinterGold::new(x)).collect();
 
         let mut group = c.benchmark_group(format!("extern_ntt/N=2^{log_n}"));
         configure_group(&mut group, n);
 
-        let plan = tfhe_ntt::prime64::Plan::try_new(n, P)
-            .expect("tfhe-ntt: Goldilocks NTT plan failed");
+        let plan =
+            tfhe_ntt::prime64::Plan::try_new(n, P).expect("tfhe-ntt: Goldilocks NTT plan failed");
         group.bench_function("TFHE", |b| {
             b.iter_batched(
                 || input_tfhe.clone(),
@@ -41,7 +42,7 @@ fn bench_extern_ntt(c: &mut Criterion) {
                 BatchSize::LargeInput,
             )
         });
-        
+
         // TODO: evaluates over 2N-th roots (odd powers) output is differnt, investigate more
         let twiddles = get_twiddles::<WinterGold>(n);
         group.bench_function("Winterfell", |b| {

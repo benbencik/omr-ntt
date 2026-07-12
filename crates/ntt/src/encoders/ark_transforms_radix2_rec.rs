@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Recursive out-of-place radix-2 DIT NTT
 // Source project: ark-transforms
 // Source path: crates/transforms/src/lib.rs -- ntt_rec, ScalarCombine, ntt_with_twiddles
@@ -5,7 +6,6 @@
 //            (Math. Comput., 1965)
 
 use ark_ff::FftField;
-use rayon::prelude::*;
 
 use crate::encoder::{NttDomain, NttEncoder};
 
@@ -17,8 +17,7 @@ const PAR_THRESHOLD: usize = 1 << 12;
 pub struct ArkRadix2Rec;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for ArkRadix2Rec {
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         let out = ntt_rec(buf, &domain.twiddles);
         buf.copy_from_slice(&out);
     }

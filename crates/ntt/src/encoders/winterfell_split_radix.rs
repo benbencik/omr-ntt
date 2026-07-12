@@ -1,3 +1,4 @@
+//! Ported from the source, unchecked!
 // Recursive split-radix NTT
 // Source project: winterfell/math
 // Source path: math/src/fft/fft_inputs.rs -- fft_in_place (adapted from https://github.com/0xProject/OpenZKP)
@@ -11,12 +12,9 @@ pub struct WinterfellSplitRadix;
 
 impl<F: FftField> NttEncoder<F> for WinterfellSplitRadix {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
-        if domain.N > 1 {
-            fft_in_place(buf, &domain.bitrev_twiddles, 1, 1, 0);
-            derange(buf, domain.log_N);
-        }
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        fft_in_place(buf, &domain.bitrev_twiddles, 1, 1, 0);
+        derange(buf, domain.log_N);
     }
 
     fn name(&self) -> &str {

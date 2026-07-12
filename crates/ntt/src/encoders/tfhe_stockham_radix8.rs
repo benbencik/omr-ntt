@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Stockham auto-sort radix-8 DIT NTT (out-of-place, no bit-reversal)
 // Source project: tfhe-fft
 // Source path: src/dit8.rs -- stockham_core_generic, last_butterfly
@@ -15,13 +16,12 @@ use crate::encoder::{NttDomain, NttEncoder};
 pub struct TfheStockhamRadix8;
 
 impl<F: FftField> NttEncoder<F> for TfheStockhamRadix8 {
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         assert!(
             domain.log_N % 3 == 0,
             "TfheStockhamRadix8 requires N to be a power of 8 (log₂N divisible by 3), got log₂N={}",
             domain.log_N
         );
-        assert_eq!(buf.len(), domain.N);
         let out = ntt_stockham_r8(buf, domain);
         buf.copy_from_slice(&out);
     }

@@ -68,14 +68,28 @@ pub(crate) fn powers<F: Field>(count: usize, base: F) -> Vec<F> {
 }
 
 pub trait NttEncoder<F: FftField>: Send + Sync {
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>);
-    // TODO: add `ntt_partial` each encode will need its own pruned implementation
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>);
+
+    fn is_partial(&self) -> bool {
+        false
+    }
+
+    fn s(&self) -> Option<usize> {
+        None
+    }
+
     fn name(&self) -> &str;
 }
 
 impl<F: FftField, E: NttEncoder<F> + ?Sized> NttEncoder<F> for Box<E> {
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        (**self).ntt_full(buf, domain)
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        (**self).ntt(buf, domain)
+    }
+    fn is_partial(&self) -> bool {
+        (**self).is_partial()
+    }
+    fn s(&self) -> Option<usize> {
+        (**self).s()
     }
     fn name(&self) -> &str {
         (**self).name()

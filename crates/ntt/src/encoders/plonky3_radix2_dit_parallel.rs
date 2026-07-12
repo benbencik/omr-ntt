@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Parallel radix-2 DIT NTT
 // Source project: Plonky3
 // Source path: dft/src/radix_2_dit_parallel.rs -- Plonky3Radix2DitParallel (simplified scalar port;
@@ -12,8 +13,7 @@ pub struct Plonky3Radix2DitParallel;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for Plonky3Radix2DitParallel {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         ntt_in_place_parallel(buf, domain);
     }
 

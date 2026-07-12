@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Bowers G-network DIF NTT
 // Source project: lambdaworks-math
 // Source path: crates/math/src/fft/cpu/bowers_fft.rs -- bowers_fft_opt_fused, LayerTwiddles
@@ -11,8 +12,7 @@ pub struct LambdaBowers;
 
 impl<F: FftField> NttEncoder<F> for LambdaBowers {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         let layers = layer_twiddles(domain);
         bowers_fft_opt_fused(buf, &layers);
         derange(buf, domain.log_N);

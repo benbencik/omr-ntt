@@ -1,3 +1,4 @@
+//! Unchecked (tests against naive pass)
 // Four-step transpose-based parallel NTT
 // Source project: winterfell/math
 // Source path: math/src/fft/concurrent.rs -- split_radix_fft (adapted from https://github.com/0xProject/OpenZKP)
@@ -15,12 +16,9 @@ pub struct WinterfellFourStep;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for WinterfellFourStep {
     #[allow(non_snake_case)]
-    fn ntt_full(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        assert_eq!(buf.len(), domain.N);
-        if domain.N > 1 {
-            split_radix_fft_parallel(buf, &domain.bitrev_twiddles);
-            derange(buf, domain.log_N);
-        }
+    fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
+        split_radix_fft_parallel(buf, &domain.bitrev_twiddles);
+        derange(buf, domain.log_N);
     }
 
     fn name(&self) -> &str {
