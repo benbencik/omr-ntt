@@ -75,8 +75,10 @@ pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttE
 
 //* Note: LambdaRadix4 only included when log_N is even
 #[allow(non_snake_case)]
-pub fn bench_encoders<F: FftField + Send + Sync>(N: usize) -> Vec<Box<dyn NttEncoder<F>>> {
-    let log_n = N.trailing_zeros();
+pub fn bench_encoders<F: FftField + Send + Sync>(
+    domain: &NttDomain<F>,
+) -> Vec<Box<dyn NttEncoder<F>>> {
+    let log_n = domain.N.trailing_zeros();
     let mut v: Vec<Box<dyn NttEncoder<F>>> = vec![
         Box::new(ArkRadix2),
         Box::new(ArkRadix2Rec),
