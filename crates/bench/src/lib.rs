@@ -1,6 +1,9 @@
+use std::time::Duration;
+
 use ark_ff::FftField;
+use criterion::{BenchmarkGroup, Throughput, measurement::WallTime};
 use ntt::encoders::{
-    ArkRadix2, ArkRadix2Rec, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
+    ArkRadix2, ArkRadix2Rec, Fft3w, LambdaBowers, LambdaRadix4, Plonky3Radix2DitParallel,
     Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep, WinterfellSplitRadix,
 };
 use rand::SeedableRng;
@@ -42,15 +45,21 @@ impl BenchParams {
     }
 }
 
+pub fn configure_group(group: &mut BenchmarkGroup<'_, WallTime>, n: usize) {
+    let secs = if n >= 1 << 26 { 300 } else { 60 };
+    group
+        .measurement_time(Duration::from_secs(secs))
+        .throughput(Throughput::Elements(n as u64));
+}
+
 pub fn gen_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F> {
     let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
     let v = (0..params.N).map(|_| F::rand(&mut rng)).collect();
-    Input::Full(v)
+    v
 }
 
 pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttEncoder<F>>> {
     vec![
-        Box::new(Naive),
         Box::new(ArkRadix2),
         Box::new(ArkRadix2Rec),
         Box::new(LambdaBowers),
