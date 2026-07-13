@@ -4,16 +4,23 @@ use ark_ff::FftField;
 
 use crate::encoder::{NttDomain, NttEncoder};
 
-/// Sparsity parameter: retain the first `2 * S` outputs.
-const S: usize = 1000;
+//* Note: Temp solution, `s` will be a constnat later
+pub struct WinterfellFourStepPartial {
+    // use only the first `2 * s` outputs
+    pub s: usize,
+}
 
-pub struct WinterfellFourStepPartial;
+impl WinterfellFourStepPartial {
+    pub fn new(s: usize) -> Self {
+        Self { s }
+    }
+}
 
 impl<F: FftField> NttEncoder<F> for WinterfellFourStepPartial {
     #[allow(non_snake_case)]
     fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
         let N = domain.N;
-        let m = (2 * S).min(N); // outputs we need
+        let m = (2 * self.s).min(N);
         if m == 0 {
             return;
         }
@@ -48,14 +55,6 @@ impl<F: FftField> NttEncoder<F> for WinterfellFourStepPartial {
             }
             buf[k1] = acc;
         }
-    }
-
-    fn is_partial(&self) -> bool {
-        true
-    }
-
-    fn s(&self) -> Option<usize> {
-        Some(S)
     }
 
     fn name(&self) -> &str {

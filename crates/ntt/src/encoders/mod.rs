@@ -40,7 +40,6 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
         Box::new(LambdaBowers),
         Box::new(WinterfellSplitRadix),
         Box::new(WinterfellFourStep),
-        Box::new(WinterfellFourStepPartial),
         Box::new(Plonky3Radix2DitParallel),
         Box::new(Plonky3Radix2LayerSplit),
         Box::new(Fft3w),
@@ -52,4 +51,10 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
         v.push(Box::new(TfheStockhamRadix8));
     }
     v
+}
+
+pub fn all_partial<F: FftField + Send + Sync>(
+    s: usize,
+) -> Vec<Box<dyn NttEncoder<F>>> {
+    vec![Box::new(WinterfellFourStepPartial::new(s))]
 }

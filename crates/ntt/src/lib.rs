@@ -54,8 +54,10 @@ mod tests {
         }
     }
 
-    fn assert_prefix_agrees_with_naive(encoder: &impl NttEncoder<DefaultField>) {
-        let s = encoder.s().expect("partial encoder must report s");
+    fn assert_prefix_agrees_with_naive(
+        encoder: &impl NttEncoder<DefaultField>,
+        s: usize,
+    ) {
         let cases: &[usize] = &[64, 256, 1024];
         let mut rng = test_rng();
 
@@ -196,6 +198,8 @@ mod tests {
 
     #[test]
     fn winterfell_four_step_partial_agrees_with_naive() {
-        assert_prefix_agrees_with_naive(&WinterfellFourStepPartial);
+        for s in [4, 16, 50] {
+            assert_prefix_agrees_with_naive(&WinterfellFourStepPartial::new(s), s);
+        }
     }
 }
