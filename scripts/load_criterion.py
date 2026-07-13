@@ -16,7 +16,7 @@ def load_results(criterion_dir: str | pathlib.Path = "target/criterion") -> pd.D
         encoder = est_path.parts[-3]
         group = est_path.parts[-4]
 
-        m = re.search(r"N=2_(\d+)", group)
+        m = re.search(r"logN=(\d+)", group)
         if not m:
             continue
         log2_n = int(m.group(1))

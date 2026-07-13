@@ -9,8 +9,9 @@ fn full_ntt_iter_n(c: &mut Criterion) {
         let domain = NttDomain::<DefaultField>::new(n);
         let input = gen_input_seeded::<DefaultField>(&params, 42);
 
-        let mut group = c.benchmark_group(format!("full_ntt_iter_n/N=2^{log_n}"));
+        let mut group = c.benchmark_group(format!("full_ntt_iter_n/logN={log_n}"));
         configure_group(&mut group, n);
+        group.sample_size(50);
 
         for encoder in encoders::all::<DefaultField>(log_n) {
             group.bench_function(encoder.name(), |b| {

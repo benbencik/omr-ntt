@@ -10,8 +10,9 @@ fn partial_ntt_iter_s(c: &mut Criterion) {
         let domain = NttDomain::<DefaultField>::new(n);
         let input = gen_input_seeded::<DefaultField>(&params, 42);
 
-        let mut group = c.benchmark_group(format!("partial_ntt_iter_s/N=2^{log_n}_s={s}"));
+        let mut group = c.benchmark_group(format!("partial_ntt_iter_s/logN={log_n}_s={s}"));
         configure_group(&mut group, n);
+        group.sample_size(50);
 
         for encoder in encoders::all_partial::<DefaultField>(s) {
             group.bench_function(encoder.name(), |b| {
