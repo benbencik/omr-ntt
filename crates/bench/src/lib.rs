@@ -2,10 +2,6 @@ use std::time::Duration;
 
 use ark_ff::FftField;
 use criterion::{BenchmarkGroup, Throughput, measurement::WallTime};
-use ntt::encoders::{
-    ArkRadix2, ArkRadix2Rec, Fft3w, LambdaBowers, LambdaRadix4, Plonky3Radix2DitParallel,
-    Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep, WinterfellSplitRadix,
-};
 use rand::SeedableRng;
 
 pub use ntt::encoder::{Input, NttDomain, NttEncoder};
@@ -58,42 +54,3 @@ pub fn gen_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F
     v
 }
 
-pub fn all_implemented_encoders<F: FftField + Send + Sync>() -> Vec<Box<dyn NttEncoder<F>>> {
-    vec![
-        Box::new(ArkRadix2),
-        Box::new(ArkRadix2Rec),
-        Box::new(LambdaBowers),
-        Box::new(WinterfellSplitRadix),
-        Box::new(WinterfellFourStep),
-        Box::new(Plonky3Radix2DitParallel),
-        Box::new(Plonky3Radix2LayerSplit),
-        Box::new(LambdaRadix4),
-        Box::new(TfheStockhamRadix8),
-        Box::new(Fft3w),
-    ]
-}
-
-//* Note: LambdaRadix4 only included when log_N is even
-#[allow(non_snake_case)]
-pub fn bench_encoders<F: FftField + Send + Sync>(
-    domain: &NttDomain<F>,
-) -> Vec<Box<dyn NttEncoder<F>>> {
-    let log_n = domain.N.trailing_zeros();
-    let mut v: Vec<Box<dyn NttEncoder<F>>> = vec![
-        Box::new(ArkRadix2),
-        Box::new(ArkRadix2Rec),
-        Box::new(LambdaBowers),
-        Box::new(WinterfellSplitRadix),
-        Box::new(WinterfellFourStep),
-        Box::new(Plonky3Radix2DitParallel),
-        Box::new(Plonky3Radix2LayerSplit),
-        Box::new(Fft3w),
-    ];
-    if log_n % 2 == 0 {
-        v.push(Box::new(LambdaRadix4));
-    }
-    if log_n % 3 == 0 {
-        v.push(Box::new(TfheStockhamRadix8));
-    }
-    v
-}

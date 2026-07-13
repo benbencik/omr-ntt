@@ -25,3 +25,31 @@ pub use tfhe_stockham_radix8::TfheStockhamRadix8;
 pub use winterfell_four_step::WinterfellFourStep;
 pub use winterfell_four_step_partial::WinterfellFourStepPartial;
 pub use winterfell_split_radix::WinterfellSplitRadix;
+
+use ark_ff::FftField;
+
+use crate::encoder::NttEncoder;
+
+// LambdaRadix4 only included when log_N is even
+// TfheStockhamRadix8 only included when log_N is divisible by 3
+// Naive is excluded, too slow to bench for large N
+pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>> {
+    let mut v: Vec<Box<dyn NttEncoder<F>>> = vec![
+        Box::new(ArkRadix2),
+        Box::new(ArkRadix2Rec),
+        Box::new(LambdaBowers),
+        Box::new(WinterfellSplitRadix),
+        Box::new(WinterfellFourStep),
+        Box::new(WinterfellFourStepPartial),
+        Box::new(Plonky3Radix2DitParallel),
+        Box::new(Plonky3Radix2LayerSplit),
+        Box::new(Fft3w),
+    ];
+    if log_n % 2 == 0 {
+        v.push(Box::new(LambdaRadix4));
+    }
+    if log_n % 3 == 0 {
+        v.push(Box::new(TfheStockhamRadix8));
+    }
+    v
+}
