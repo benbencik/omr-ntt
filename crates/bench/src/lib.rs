@@ -27,22 +27,27 @@ impl BenchParams {
         Self { N, s, k }
     }
 
-    pub fn n_iter(log_ns: &[u32]) -> Vec<Self> {
+    pub fn n_iter(log_n: &[u32]) -> Vec<Self> {
         const S: usize = 1000; // fix to s 1000 (arbitrary) 
-        log_ns
+        log_n
             .iter()
             .map(|&log_n| Self::new(1 << log_n, S))
             .collect()
     }
 
-    pub fn s_iter(s_values: &[usize]) -> Vec<Self> {
-        const LOG_N: u32 = 22; // fix to logn 22 (arbitrary)
-        s_values.iter().map(|&s| Self::new(1 << LOG_N, s)).collect()
+    pub fn s_iter(log_n: &[u32], s_values: &[usize]) -> Vec<Self> {
+        log_n
+        .iter()
+        .flat_map(|&n| {
+            // The `move` keyword is required here so the inner closure takes ownership of the copied `n`
+            s_values.iter().map(move |&s| Self::new(1 << n, s))
+        })
+        .collect()
     }
 }
 
 pub fn configure_group(group: &mut BenchmarkGroup<'_, WallTime>, n: usize) {
-    let secs = if n >= 1 << 26 { 300 } else { 60 };
+    let secs = if n >= 1 << 26 { 350 } else { 60 };
     group
         .measurement_time(Duration::from_secs(secs))
         .throughput(Throughput::Elements(n as u64));
