@@ -3,6 +3,7 @@
 use ark_ff::FftField;
 
 use crate::encoder::{NttDomain, NttEncoder};
+use super::utils::derange;
 
 //* Note: Temp solution, `s` will be a constnat later
 pub struct WinterfellFourStepPartial {
@@ -86,20 +87,6 @@ fn radix2_dit<F: FftField>(buf: &mut [F], domain: &NttDomain<F>) {
         }
         gap *= 2;
     }
-}
-
-fn derange<T>(xi: &mut [T], log_len: u32) {
-    for idx in 1..(xi.len() as u64 - 1) {
-        let ridx = bitrev(idx, log_len);
-        if idx < ridx {
-            xi.swap(idx as usize, ridx as usize);
-        }
-    }
-}
-
-#[inline]
-fn bitrev(a: u64, log_len: u32) -> u64 {
-    a.reverse_bits().wrapping_shr(64 - log_len)
 }
 
 #[inline]

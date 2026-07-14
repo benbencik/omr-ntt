@@ -18,7 +18,7 @@ mod tests {
         encoders::{
             ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
             Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep,
-            WinterfellFourStepPartial, WinterfellSplitRadix,
+            WinterfellFourStepPartial
         },
     };
 
@@ -138,11 +138,6 @@ mod tests {
     #[test]
     fn lambda_bowers_agrees_with_naive() {
         assert_agrees_with_naive(&LambdaBowers);
-    }
-
-    #[test]
-    fn winterfell_split_radix_agrees_with_naive() {
-        assert_agrees_with_naive(&WinterfellSplitRadix);
     }
 
     #[test]

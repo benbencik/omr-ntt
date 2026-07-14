@@ -7,6 +7,7 @@
 use ark_ff::FftField;
 
 use crate::encoder::{NttDomain, NttEncoder};
+use super::utils::derange;
 
 pub struct LambdaBowers;
 
@@ -170,18 +171,4 @@ fn process_single_layer_block<F: FftField>(block: &mut [F], twiddles: &[F], half
         block[j] = sum;
         block[j + half_block] = w * diff;
     }
-}
-
-fn derange<T>(xi: &mut [T], log_len: u32) {
-    for idx in 1..(xi.len() as u64 - 1) {
-        let ridx = bitrev(idx, log_len);
-        if idx < ridx {
-            xi.swap(idx as usize, ridx as usize);
-        }
-    }
-}
-
-#[inline]
-fn bitrev(a: u64, log_len: u32) -> u64 {
-    a.reverse_bits().wrapping_shr(64 - log_len)
 }

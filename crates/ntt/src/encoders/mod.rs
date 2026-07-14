@@ -1,5 +1,6 @@
 // All NTT encoder implementations
 
+mod utils;
 mod ark_radix2;
 mod ark_transforms_radix2_rec;
 mod fft3w;
@@ -11,7 +12,6 @@ mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
 mod winterfell_four_step;
 mod winterfell_four_step_partial;
-mod winterfell_split_radix;
 
 pub use ark_radix2::ArkRadix2;
 pub use ark_transforms_radix2_rec::ArkRadix2Rec;
@@ -24,7 +24,6 @@ pub use plonky3_radix2_layer_split::Plonky3Radix2LayerSplit;
 pub use tfhe_stockham_radix8::TfheStockhamRadix8;
 pub use winterfell_four_step::WinterfellFourStep;
 pub use winterfell_four_step_partial::WinterfellFourStepPartial;
-pub use winterfell_split_radix::WinterfellSplitRadix;
 
 use ark_ff::FftField;
 
@@ -38,7 +37,6 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
         Box::new(ArkRadix2),
         Box::new(ArkRadix2Rec),
         Box::new(LambdaBowers),
-        Box::new(WinterfellSplitRadix),
         Box::new(WinterfellFourStep),
         Box::new(Plonky3Radix2DitParallel),
         Box::new(Plonky3Radix2LayerSplit),

@@ -19,6 +19,7 @@ use ark_ff::FftField;
 use rayon::prelude::*;
 
 use crate::encoder::{NttDomain, NttEncoder};
+use super::utils::derange;
 
 const BLOCK: usize = 64;
 
@@ -169,18 +170,4 @@ fn transpose_rect<F: FftField + Copy>(data: &mut [F], rows: usize, cols: usize) 
         bi += block;
     }
     data.copy_from_slice(&temp);
-}
-
-fn derange<T>(xi: &mut [T], log_len: u32) {
-    for idx in 1..(xi.len() as u64 - 1) {
-        let ridx = bitrev(idx, log_len);
-        if idx < ridx {
-            xi.swap(idx as usize, ridx as usize);
-        }
-    }
-}
-
-#[inline]
-fn bitrev(a: u64, log_len: u32) -> u64 {
-    a.reverse_bits().wrapping_shr(64 - log_len)
 }

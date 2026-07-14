@@ -8,6 +8,7 @@ use ark_ff::FftField;
 use rayon::prelude::*;
 
 use crate::encoder::{NttDomain, NttEncoder};
+use super::utils::{bitrev, derange};
 
 // Decomposes N-point NTT into inner_len inner FFTs and inner_len outer FFTs
 // connected by two in-place matrix transposes; rows within each set are
@@ -157,18 +158,4 @@ fn transpose_square_2<T>(matrix: &mut [T], size: usize) {
             matrix.swap(i + 1, j + 1);
         }
     }
-}
-
-fn derange<T>(xi: &mut [T], log_len: u32) {
-    for idx in 1..(xi.len() as u64 - 1) {
-        let ridx = bitrev(idx, log_len);
-        if idx < ridx {
-            xi.swap(idx as usize, ridx as usize);
-        }
-    }
-}
-
-#[inline]
-fn bitrev(a: u64, log_len: u32) -> u64 {
-    a.reverse_bits().wrapping_shr(64 - log_len)
 }
