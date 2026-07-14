@@ -3,15 +3,15 @@
 // Source: oxifft/src/dft/solvers/cache_oblivious.rs (Frigo/Johnson, FFTW3)
 // Ported from Complex<f64> to F: FftField.
 //
-// Decomposes N = N1 × N2 (N1 = 2^⌊log_N/2⌋, N2 = N/N1):
-//   1. Transpose N1×N2 → N2×N1  (columns become contiguous rows)
+// Decomposes N = N1 * N2 (N1 = 2^⌊log_N/2⌋, N2 = N/N1):
+//   1. Transpose N1*N2 → N2*N1  (columns become contiguous rows)
 //   2. N2 parallel N1-point DIT NTTs on rows  (column FFTs of original)
-//   3. Transpose back N2×N1 → N1×N2
+//   3. Transpose back N2*N1 → N1*N2
 //   4. Twiddle multiply: data[i·N2+j] *= ω^(i·j)
 //   5. N1 parallel N2-point DIT NTTs on rows
-//   6. Final transpose N1×N2 → N2×N1
+//   6. Final transpose N1*N2 → N2*N1
 //
-// All transposes use 64-element cache blocking (vs WinterfellFourStep's 2×2).
+// Transposes use the shared cache-blocked transpose in utils.
 // No explicit bit-reversal pass on the full array; derange is only called inside
 // each base DIT NTT on the small sub-arrays.
 
@@ -19,9 +19,8 @@ use ark_ff::FftField;
 use rayon::prelude::*;
 
 use crate::encoder::{NttDomain, NttEncoder};
-use super::utils::derange;
-
-const BLOCK: usize = 64;
+use super::utils::{derange};
+use super::transpose_out_of_place::transpose_par;
 
 pub struct Fft3w;
 
@@ -48,11 +47,14 @@ fn four_step<F: FftField + Send + Sync>(data: &mut [F], domain: &NttDomain<F>) {
     let n1 = 1usize << log_n1; // ≤ sqrt(N)
     let n2 = N / n1; // ≥ n1; equals n1 iff log_N even
 
-    // Steps 1–3: column FFTs via transpose → row FFTs → transpose back
-    transpose(data, n1, n2);
-    data.par_chunks_mut(n1)
+    let mut scratch = vec![F::zero(); N];
+    
+    // Steps 1–3: transpose n1*n2 -> scratch, column FFTs, transpose n2*n1 -> data
+    transpose_par(data, &mut scratch, n2, n1);
+    scratch
+        .par_chunks_mut(n1)
         .for_each(|row| base_dit_ntt(row, domain));
-    transpose(data, n2, n1);
+    transpose_par(&scratch, data, n1, n2); // data: n1*n2
 
     // Step 4: twiddle multiply  ω^(i·j) for i∈1..n1, j∈1..n2
     twiddle_multiply(data, n1, n2, domain);
@@ -61,8 +63,9 @@ fn four_step<F: FftField + Send + Sync>(data: &mut [F], domain: &NttDomain<F>) {
     data.par_chunks_mut(n2)
         .for_each(|row| base_dit_ntt(row, domain));
 
-    // Step 6: final transpose → natural output order
-    transpose(data, n1, n2);
+    // Step 6: final transpose n1*n2 -> scratch (natural order), then copy back into data
+    transpose_par(data, &mut scratch, n2, n1);
+    data.copy_from_slice(&scratch);
 }
 
 // Twiddle multiply: data[i·n2+j] *= ω^(i·j).
@@ -109,65 +112,4 @@ fn base_dit_ntt<F: FftField>(buf: &mut [F], domain: &NttDomain<F>) {
         }
         gap *= 2;
     }
-}
-
-// Dispatch: square → in-place blocked; rectangular → out-of-place blocked.
-fn transpose<F: FftField>(data: &mut [F], rows: usize, cols: usize) {
-    debug_assert_eq!(data.len(), rows * cols);
-    if rows == cols {
-        transpose_square(data, rows);
-    } else {
-        transpose_rect(data, rows, cols);
-    }
-}
-
-// In-place blocked transpose of an n×n square matrix (row-major).
-// Block size 64 keeps each BLOCK×BLOCK tile in L1 cache.
-fn transpose_square<F: Copy>(data: &mut [F], n: usize) {
-    let block = BLOCK.min(n);
-    let mut bi = 0;
-    while bi < n {
-        let bi_end = (bi + block).min(n);
-        let mut bj = bi;
-        while bj < n {
-            let bj_end = (bj + block).min(n);
-            if bi == bj {
-                for i in bi..bi_end {
-                    for j in (i + 1)..bj_end {
-                        data.swap(i * n + j, j * n + i);
-                    }
-                }
-            } else {
-                for i in bi..bi_end {
-                    for j in bj..bj_end {
-                        data.swap(i * n + j, j * n + i);
-                    }
-                }
-            }
-            bj += block;
-        }
-        bi += block;
-    }
-}
-
-// Out-of-place blocked transpose: rows×cols row-major → cols×rows row-major.
-fn transpose_rect<F: FftField + Copy>(data: &mut [F], rows: usize, cols: usize) {
-    let mut temp = vec![F::zero(); rows * cols];
-    let block = BLOCK.min(rows.min(cols));
-    let mut bi = 0;
-    while bi < rows {
-        let bi_end = (bi + block).min(rows);
-        let mut bj = 0;
-        while bj < cols {
-            let bj_end = (bj + block).min(cols);
-            for i in bi..bi_end {
-                for j in bj..bj_end {
-                    temp[j * rows + i] = data[i * cols + j];
-                }
-            }
-            bj += block;
-        }
-        bi += block;
-    }
-    data.copy_from_slice(&temp);
 }

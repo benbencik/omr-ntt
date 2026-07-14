@@ -7,6 +7,8 @@ edition.workspace = true
 ark-ff.workspace = true
 ark-poly.workspace = true
 rayon.workspace = true
+strength_reduce.workspace = true
+num-integer.workspace = true
 
 [dev-dependencies]
 ark-std.workspace = true

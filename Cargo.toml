@@ -14,6 +14,8 @@ ntt = { path = "crates/ntt" }
 criterion = { version = "0.8", default-features = false }
 rand = { version = "0.8", features = ["small_rng"] }
 rayon = "1.10"
+strength_reduce = "^0.2.1"
+num-integer = { version = "0.1", default-features = false }
 
 [profile.release]
 opt-level = 3

@@ -8,11 +8,13 @@ use ark_ff::FftField;
 use rayon::prelude::*;
 
 use crate::encoder::{NttDomain, NttEncoder};
+use super::transpose_out_of_place::transpose_par;
 use super::utils::{bitrev, derange};
 
 // Decomposes N-point NTT into inner_len inner FFTs and inner_len outer FFTs
-// connected by two in-place matrix transposes; rows within each set are
-// independent so each half parallelises with no cross-thread communication.
+// connected by two out-of-place matrix transposes (cache-oblivious recursive);
+// a scratch buffer is ping-ponged so no copy-back is needed. Rows within each
+// FFT set are independent so each half parallelises with no cross-thread communication.
 pub struct WinterfellFourStep;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for WinterfellFourStep {
@@ -39,24 +41,25 @@ fn split_radix_fft_parallel<F: FftField + Send + Sync>(values: &mut [F], twiddle
     let log_n = n.ilog2();
     let inner_len = 1_usize << (log_n / 2);
     let outer_len = n / inner_len;
-    let stretch = outer_len / inner_len; // 1 when log_n even, 2 when odd
 
     // g = twiddles[N/4] = omega (primitive N-th root of unity)
     let g = twiddles[twiddles.len() / 2];
     let log_inner = inner_len.ilog2();
 
-    // Step 1: transpose inner_len × inner_len × stretch matrix
-    transpose_square_stretch(values, inner_len, stretch);
+    let mut scratch = vec![F::zero(); n];
 
-    // Step 2: parallel inner FFTs (inner_len rows × outer_len each)
+    // Step 1: transpose inner_len * inner_len (stretch elems per cell): values -> scratch
+    transpose_par(values, &mut scratch, outer_len, inner_len);
+
+    // Step 2: parallel inner FFTs (inner_len rows * outer_len each)
     // Each row: stretch interleaved inner_len-point FFTs
-    values.par_chunks_mut(outer_len).for_each(|row| {
-        fft_in_place(row, twiddles, stretch, stretch, 0);
+    scratch.par_chunks_mut(inner_len).for_each(|row| {
+        fft_in_place(row, twiddles, 1, 1, 0);
     });
 
-    // Step 3: transpose back
-    transpose_square_stretch(values, inner_len, stretch);
-
+    // Step 3: transpose back: scratch -> values
+    transpose_par(&scratch, values, inner_len, outer_len);
+    
     // Step 4: four-step twiddle multiply + parallel outer FFTs
     values
         .par_chunks_mut(outer_len)
@@ -124,38 +127,3 @@ fn fft_in_place<F: FftField>(
     }
 }
 
-fn transpose_square_stretch<T>(matrix: &mut [T], size: usize, stretch: usize) {
-    match stretch {
-        1 => transpose_square_1(matrix, size),
-        2 => transpose_square_2(matrix, size),
-        _ => unreachable!("stretch must be 1 or 2"),
-    }
-}
-
-fn transpose_square_1<T>(matrix: &mut [T], size: usize) {
-    debug_assert_eq!(matrix.len(), size * size);
-    for row in (0..size).step_by(2) {
-        let i = row * size + row;
-        matrix.swap(i + 1, i + size);
-        for col in (row..size).step_by(2).skip(1) {
-            let i = row * size + col;
-            let j = col * size + row;
-            matrix.swap(i, j);
-            matrix.swap(i + 1, j + size);
-            matrix.swap(i + size, j + 1);
-            matrix.swap(i + size + 1, j + size + 1);
-        }
-    }
-}
-
-fn transpose_square_2<T>(matrix: &mut [T], size: usize) {
-    debug_assert_eq!(matrix.len(), 2 * size * size);
-    for row in 0..size {
-        for col in (row..size).skip(1) {
-            let i = (row * size + col) * 2;
-            let j = (col * size + row) * 2;
-            matrix.swap(i, j);
-            matrix.swap(i + 1, j + 1);
-        }
-    }
-}

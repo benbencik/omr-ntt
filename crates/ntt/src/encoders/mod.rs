@@ -12,6 +12,7 @@ mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
 mod winterfell_four_step;
 mod winterfell_four_step_partial;
+mod transpose_out_of_place;
 
 pub use ark_radix2::ArkRadix2;
 pub use ark_transforms_radix2_rec::ArkRadix2Rec;

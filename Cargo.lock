@@ -681,8 +681,10 @@ dependencies = [
  "ark-ff",
  "ark-poly",
  "ark-std",
+ "num-integer",
  "rand 0.8.6",
  "rayon",
+ "strength_reduce",
 ]
 
 [[package]]
@@ -1210,6 +1212,12 @@ checksum = "bd5231412d905519dca6a5deb0327d407be68d6c941feec004533401d3a0a715"
 dependencies = [
  "lock_api",
 ]
+
+[[package]]
+name = "strength_reduce"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe895eb47f22e2ddd4dabc02bce419d2e643c8e3b585c78158b349195bc24d82"
 
 [[package]]
 name = "syn"
