@@ -37,12 +37,9 @@ impl BenchParams {
 
     pub fn s_iter(log_n: &[u32], s_values: &[usize]) -> Vec<Self> {
         log_n
-        .iter()
-        .flat_map(|&n| {
-            // The `move` keyword is required here so the inner closure takes ownership of the copied `n`
-            s_values.iter().map(move |&s| Self::new(1 << n, s))
-        })
-        .collect()
+            .iter()
+            .flat_map(|&n| s_values.iter().map(move |&s| Self::new(1 << n, s)))
+            .collect()
     }
 }
 
@@ -58,4 +55,3 @@ pub fn gen_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F
     let v = (0..params.N).map(|_| F::rand(&mut rng)).collect();
     v
 }
-

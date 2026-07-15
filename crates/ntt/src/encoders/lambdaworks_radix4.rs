@@ -6,8 +6,8 @@
 
 use ark_ff::FftField;
 
-use crate::encoder::{NttDomain, NttEncoder};
 use super::utils::derange;
+use crate::encoder::{NttDomain, NttEncoder};
 
 // N must be a power of 4 (log2(N) even).
 pub struct LambdaRadix4;

@@ -7,8 +7,8 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{NttDomain, NttEncoder};
 use super::utils::derange;
+use crate::encoder::{NttDomain, NttEncoder};
 
 // Splits log_N layers at mid = ceil(log_N / 2).
 // First half: standard DIT on chunks of 2^mid (no cross-chunk sync).

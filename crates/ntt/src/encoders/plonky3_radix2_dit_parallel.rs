@@ -6,8 +6,8 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{NttDomain, NttEncoder};
 use super::utils::derange;
+use crate::encoder::{NttDomain, NttEncoder};
 
 // Each butterfly stage uses par_chunks_mut (rayon); chunks at a given stage are independent.
 pub struct Plonky3Radix2DitParallel;

@@ -7,9 +7,9 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{NttDomain, NttEncoder};
 use super::transpose_out_of_place::transpose_par;
 use super::utils::{bitrev, derange};
+use crate::encoder::{NttDomain, NttEncoder};
 
 // Decomposes N-point NTT into inner_len inner FFTs and inner_len outer FFTs
 // connected by two out-of-place matrix transposes (cache-oblivious recursive);
@@ -59,12 +59,14 @@ fn split_radix_fft_parallel<F: FftField + Send + Sync>(values: &mut [F], twiddle
 
     // Step 3: transpose back: scratch -> values
     transpose_par(&scratch, values, inner_len, outer_len);
-    
+
     // Step 4: four-step twiddle multiply + parallel outer FFTs
     values
         .par_chunks_mut(outer_len)
         .enumerate()
         .for_each(|(i, row)| {
+            // TODO: this traversal can be completely moved above
+            // the transpose is already visiting all cells we can prob multiply there
             if i > 0 {
                 // permute_index(inner_len, i) = bitrev(i, log_inner)
                 let i_perm = bitrev(i as u64, log_inner) as usize;
@@ -79,6 +81,7 @@ fn split_radix_fft_parallel<F: FftField + Send + Sync>(values: &mut [F], twiddle
         });
 }
 
+// TODO: try higher radix and hardcoded basecases
 // Recursive split-radix FFT producing bit-reversed output.
 // Ported from winterfell/math, fft_inputs.rs fft_in_place (adapted from OpenZKP)
 fn fft_in_place<F: FftField>(
@@ -126,4 +129,3 @@ fn fft_in_place<F: FftField>(
         }
     }
 }
-

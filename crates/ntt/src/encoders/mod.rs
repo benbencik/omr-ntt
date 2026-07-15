@@ -1,6 +1,5 @@
 // All NTT encoder implementations
 
-mod utils;
 mod ark_radix2;
 mod ark_transforms_radix2_rec;
 mod fft3w;
@@ -10,9 +9,10 @@ mod naive;
 mod plonky3_radix2_dit_parallel;
 mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
+mod transpose_out_of_place;
+mod utils;
 mod winterfell_four_step;
 mod winterfell_four_step_partial;
-mod transpose_out_of_place;
 
 pub use ark_radix2::ArkRadix2;
 pub use ark_transforms_radix2_rec::ArkRadix2Rec;
@@ -52,8 +52,6 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
     v
 }
 
-pub fn all_partial<F: FftField + Send + Sync>(
-    s: usize,
-) -> Vec<Box<dyn NttEncoder<F>>> {
+pub fn all_partial<F: FftField + Send + Sync>(s: usize) -> Vec<Box<dyn NttEncoder<F>>> {
     vec![Box::new(WinterfellFourStepPartial::new(s))]
 }

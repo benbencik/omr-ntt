@@ -8,7 +8,7 @@ pub(super) fn derange<T: Send>(xi: &mut [T], log_len: u32) {
     (1..n as u64 - 1).into_par_iter().for_each(|idx| {
         let rev_idx = bitrev(idx, log_len) as usize;
         // swap is applied only once per pair
-        if idx < rev_idx as u64 {            
+        if idx < rev_idx as u64 {
             // This is safe because bitrev is a bijection
             unsafe {
                 let p = ptr as *mut T;

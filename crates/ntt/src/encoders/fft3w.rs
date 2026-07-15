@@ -18,9 +18,9 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-use crate::encoder::{NttDomain, NttEncoder};
-use super::utils::{derange};
 use super::transpose_out_of_place::transpose_par;
+use super::utils::derange;
+use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct Fft3w;
 
@@ -48,7 +48,7 @@ fn four_step<F: FftField + Send + Sync>(data: &mut [F], domain: &NttDomain<F>) {
     let n2 = N / n1; // ≥ n1; equals n1 iff log_N even
 
     let mut scratch = vec![F::zero(); N];
-    
+
     // Steps 1–3: transpose n1*n2 -> scratch, column FFTs, transpose n2*n1 -> data
     transpose_par(data, &mut scratch, n2, n1);
     scratch

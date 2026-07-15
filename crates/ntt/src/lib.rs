@@ -17,11 +17,13 @@ mod tests {
         encoders::{
             ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
             Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep,
-            WinterfellFourStepPartial
+            WinterfellFourStepPartial,
         },
     };
-    
-    const POWERS_OF_TWO: [usize; 16] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
+
+    const POWERS_OF_TWO: [usize; 16] = [
+        2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
+    ];
     const EVEN_POWERS_OF_TWO: [usize; 8] = [4, 16, 64, 256, 1024, 4096, 16384, 65536];
     const POWERS_OF_TWO_DIV_BY_3: [usize; 5] = [8, 64, 512, 4096, 32768];
 
@@ -54,7 +56,7 @@ mod tests {
     fn assert_prefix_agrees_with_ark(
         encoder: &impl NttEncoder<DefaultField>,
         s: usize,
-        cases: &[usize]
+        cases: &[usize],
     ) {
         let mut rng = test_rng();
 
