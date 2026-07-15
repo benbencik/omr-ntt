@@ -8,9 +8,8 @@ pub use fields::{DefaultField, Goldilocks};
 
 #[cfg(test)]
 mod tests {
-    use ark_ff::{Field, One, UniformRand, Zero};
+    use ark_ff::UniformRand;
     use ark_std::test_rng;
-    use rand::seq::index;
 
     use crate::fields::DefaultField;
     use crate::{
@@ -21,26 +20,24 @@ mod tests {
             WinterfellFourStepPartial
         },
     };
+    
+    const POWERS_OF_TWO: [usize; 16] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
+    const EVEN_POWERS_OF_TWO: [usize; 8] = [4, 16, 64, 256, 1024, 4096, 16384, 65536];
+    const POWERS_OF_TWO_DIV_BY_3: [usize; 5] = [8, 64, 512, 4096, 32768];
 
-    fn gen_sparse(n: usize, s: usize, rng: &mut impl rand::Rng) -> Input<DefaultField> {
-        let chosen = index::sample(rng, n, s);
-        let mut v = vec![DefaultField::zero(); n];
-        for idx in chosen {
-            v[idx] = DefaultField::rand(rng);
-        }
-        v
+    fn gen_random(n: usize, rng: &mut impl rand::Rng) -> Input<DefaultField> {
+        (0..n).map(|_| DefaultField::rand(rng)).collect()
     }
 
-    fn assert_agrees_with_naive(encoder: &impl NttEncoder<DefaultField>) {
-        let cases: &[(usize, usize)] = &[(64, 5), (256, 16), (512, 24), (1024, 32)];
+    fn assert_agrees_with_ark(encoder: &impl NttEncoder<DefaultField>, sizes: &[usize]) {
         let mut rng = test_rng();
 
-        for &(n, s) in cases {
+        for &n in sizes {
             let domain = NttDomain::<DefaultField>::new(n);
-            let input = gen_sparse(n, s, &mut rng);
+            let input = gen_random(n, &mut rng);
 
             let mut expected = input.clone();
-            Naive.ntt(&mut expected, &domain);
+            ArkRadix2.ntt(&mut expected, &domain);
 
             let mut actual = input;
             encoder.ntt(&mut actual, &domain);
@@ -48,26 +45,26 @@ mod tests {
             assert_eq!(
                 expected,
                 actual,
-                "{}: ntt mismatch at N={n}, s={s}",
+                "{}: ntt mismatch at N={n}",
                 encoder.name()
             );
         }
     }
 
-    fn assert_prefix_agrees_with_naive(
+    fn assert_prefix_agrees_with_ark(
         encoder: &impl NttEncoder<DefaultField>,
         s: usize,
+        cases: &[usize]
     ) {
-        let cases: &[usize] = &[64, 256, 1024];
         let mut rng = test_rng();
 
         for &n in cases {
             let m = (2 * s).min(n);
             let domain = NttDomain::<DefaultField>::new(n);
-            let input: Vec<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
+            let input = gen_random(n, &mut rng);
 
             let mut expected = input.clone();
-            Naive.ntt(&mut expected, &domain);
+            ArkRadix2.ntt(&mut expected, &domain);
 
             let mut actual = input;
             encoder.ntt(&mut actual, &domain);
@@ -81,29 +78,11 @@ mod tests {
         }
     }
 
+    // naive O(N^2) DFT vs arkworks radix-2
+    // all other encoders are checked against arkworks
     #[test]
-    fn one_coeff_at_index_0_gives_all_ones() {
-        let n = 64usize;
-        let domain = NttDomain::<DefaultField>::new(n);
-        let mut v = vec![DefaultField::zero(); n];
-        v[0] = DefaultField::one();
-        Naive.ntt(&mut v, &domain);
-        for (j, &w) in v.iter().enumerate() {
-            assert_eq!(w, DefaultField::one(), "W[{j}] should be 1");
-        }
-    }
-
-    #[test]
-    fn one_coeff_at_index_1_gives_twiddles() {
-        // x = [0, 1, 0, ..., 0]  =>  W[j] = omega^{1*j} = omega^j
-        let n = 64usize;
-        let domain = NttDomain::<DefaultField>::new(n);
-        let mut v = vec![DefaultField::zero(); n];
-        v[1] = DefaultField::one();
-        Naive.ntt(&mut v, &domain);
-        for j in 0..n {
-            assert_eq!(v[j], domain.omega.pow([j as u64]), "W[{j}] != omega^{j}");
-        }
+    fn naive_agrees_with_ark() {
+        assert_agrees_with_ark(&Naive, &[64, 128, 256]);
     }
 
     #[test]
@@ -111,8 +90,8 @@ mod tests {
         let n = 32usize;
         let domain = NttDomain::<DefaultField>::new(n);
         let mut rng = test_rng();
-        let x: Input<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
-        let y: Input<DefaultField> = (0..n).map(|_| DefaultField::rand(&mut rng)).collect();
+        let x = gen_random(n, &mut rng);
+        let y = gen_random(n, &mut rng);
         let a = DefaultField::rand(&mut rng);
         let b = DefaultField::rand(&mut rng);
         let mut xy: Input<DefaultField> =
@@ -131,70 +110,46 @@ mod tests {
     }
 
     #[test]
-    fn ark_radix2_agrees_with_naive() {
-        assert_agrees_with_naive(&ArkRadix2);
+    fn lambda_bowers_agrees_with_ark() {
+        assert_agrees_with_ark(&LambdaBowers, &POWERS_OF_TWO);
     }
 
     #[test]
-    fn lambda_bowers_agrees_with_naive() {
-        assert_agrees_with_naive(&LambdaBowers);
+    fn plonky3_radix2_dit_parallel_agrees_with_ark() {
+        assert_agrees_with_ark(&Plonky3Radix2DitParallel, &POWERS_OF_TWO);
     }
 
     #[test]
-    fn plonky3_radix2_dit_parallel_agrees_with_naive() {
-        assert_agrees_with_naive(&Plonky3Radix2DitParallel);
+    fn winterfell_four_step_agrees_with_ark() {
+        assert_agrees_with_ark(&WinterfellFourStep, &POWERS_OF_TWO);
     }
 
     #[test]
-    fn winterfell_four_step_agrees_with_naive() {
-        assert_agrees_with_naive(&WinterfellFourStep);
+    fn fft3w_agrees_with_ark() {
+        assert_agrees_with_ark(&Fft3w, &POWERS_OF_TWO);
     }
 
     #[test]
-    fn fft3w_agrees_with_naive() {
-        assert_agrees_with_naive(&Fft3w);
+    fn plonky3_radix2_layer_split_agrees_with_ark() {
+        assert_agrees_with_ark(&Plonky3Radix2LayerSplit, &POWERS_OF_TWO);
+    }
+
+    // LambdaRadix4 requires N to be a power of 4 (logN even)
+    #[test]
+    fn lambda_radix4_agrees_with_ark() {
+        assert_agrees_with_ark(&LambdaRadix4, &EVEN_POWERS_OF_TWO);
+    }
+
+    // TfheStockhamRadix8 requires N to be a power of 8 (logN divisible by 3)
+    #[test]
+    fn tfhe_stockham_radix8_agrees_with_ark() {
+        assert_agrees_with_ark(&TfheStockhamRadix8, &POWERS_OF_TWO_DIV_BY_3);
     }
 
     #[test]
-    fn plonky3_radix2_layer_split_agrees_with_naive() {
-        assert_agrees_with_naive(&Plonky3Radix2LayerSplit);
-    }
-
-    #[test]
-    fn lambda_radix4_agrees_with_naive() {
-        let cases: &[(usize, usize)] = &[(64, 5), (256, 16), (1024, 32)];
-        let mut rng = test_rng();
-        for &(n, s) in cases {
-            let domain = NttDomain::<DefaultField>::new(n);
-            let input = gen_sparse(n, s, &mut rng);
-            let mut expected = input.clone();
-            Naive.ntt(&mut expected, &domain);
-            let mut actual = input;
-            LambdaRadix4.ntt(&mut actual, &domain);
-            assert_eq!(expected, actual, "LambdaRadix4: ntt mismatch at N={n}");
-        }
-    }
-
-    // TfheStockhamRadix8 requires N to be a power of 8 (log₂N divisible by 3)
-    #[test]
-    fn tfhe_stockham_radix8_agrees_with_naive() {
-        let cases: &[(usize, usize)] = &[(8, 3), (512, 24)];
-        let mut rng = test_rng();
-        for &(n, s) in cases {
-            let domain = NttDomain::<DefaultField>::new(n);
-            let input = gen_sparse(n, s.min(n / 2), &mut rng);
-            let mut expected = input.clone();
-            Naive.ntt(&mut expected, &domain);
-            let mut actual = input;
-            TfheStockhamRadix8.ntt(&mut actual, &domain);
-            assert_eq!(expected, actual, "TfheStockhamRadix8: mismatch at N={n}");
-        }
-    }
-
-    #[test]
-    fn winterfell_four_step_partial_agrees_with_naive() {
+    fn winterfell_four_step_partial_agrees_with_ark() {
         for s in [4, 16, 50] {
-            assert_prefix_agrees_with_naive(&WinterfellFourStepPartial::new(s), s);
+            assert_prefix_agrees_with_ark(&WinterfellFourStepPartial::new(s), s, &POWERS_OF_TWO);
         }
     }
 }
