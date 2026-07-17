@@ -7,8 +7,8 @@ edition = "2024"
 version = "0.1.0"
 
 [workspace.dependencies]
-ark-ff = { git = "https://github.com/benbencik/algebra.git", branch = "master", features = ["std", "parallel"] }
-ark-poly = { git = "https://github.com/benbencik/algebra.git", branch = "master", features = ["std", "parallel"] }
+ark-ff = { git = "https://github.com/arkworks-rs/algebra.git", branch = "master", features = ["std", "parallel"] }
+ark-poly = { git = "https://github.com/arkworks-rs/algebra.git", branch = "master", features = ["std", "parallel"] }
 ark-std = { version = "0.5.0", features = ["std"] }
 ntt = { path = "crates/ntt" }
 criterion = { version = "0.8", default-features = false }
