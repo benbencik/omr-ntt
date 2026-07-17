@@ -9,10 +9,10 @@ mod naive;
 mod plonky3_radix2_dit_parallel;
 mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
+mod transform_decomposition;
 mod transpose_out_of_place;
 mod utils;
 mod winterfell_four_step;
-mod winterfell_four_step_partial;
 
 pub use ark_radix2::ArkRadix2;
 pub use ark_transforms_radix2_rec::ArkRadix2Rec;
@@ -23,8 +23,8 @@ pub use naive::Naive;
 pub use plonky3_radix2_dit_parallel::Plonky3Radix2DitParallel;
 pub use plonky3_radix2_layer_split::Plonky3Radix2LayerSplit;
 pub use tfhe_stockham_radix8::TfheStockhamRadix8;
+pub use transform_decomposition::WinterfellFourStepPartial;
 pub use winterfell_four_step::WinterfellFourStep;
-pub use winterfell_four_step_partial::WinterfellFourStepPartial;
 
 use ark_ff::FftField;
 

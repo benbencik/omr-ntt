@@ -150,7 +150,7 @@ mod tests {
 
     #[test]
     fn winterfell_four_step_partial_agrees_with_ark() {
-        for s in [4, 16, 50] {
+        for s in [2, 4, 8, 16, 50] {
             assert_prefix_agrees_with_ark(&WinterfellFourStepPartial::new(s), s, &POWERS_OF_TWO);
         }
     }
