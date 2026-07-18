@@ -15,9 +15,9 @@ mod tests {
     use crate::{
         encoder::{Input, NttDomain, NttEncoder},
         encoders::{
-            ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
-            Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep,
-            TransformDecomposition,
+            ArkRadix2, Dft, DftPartial, Fft3w, LambdaBowers, LambdaRadix4,
+            Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
+            TransformDecomposition, WinterfellFourStep,
         },
     };
 
@@ -80,11 +80,11 @@ mod tests {
         }
     }
 
-    // naive O(N^2) DFT vs arkworks radix-2
+    // O(N^2) DFT vs arkworks radix-2
     // all other encoders are checked against arkworks
     #[test]
-    fn naive_agrees_with_ark() {
-        assert_agrees_with_ark(&Naive, &[64, 128, 256]);
+    fn dft_agrees_with_ark() {
+        assert_agrees_with_ark(&Dft, &[64, 128, 256]);
     }
 
     #[test]
@@ -100,9 +100,9 @@ mod tests {
             x.iter().zip(&y).map(|(&xi, &yi)| a * xi + b * yi).collect();
         let mut nx = x;
         let mut ny = y;
-        Naive.ntt(&mut xy, &domain);
-        Naive.ntt(&mut nx, &domain);
-        Naive.ntt(&mut ny, &domain);
+        Dft.ntt(&mut xy, &domain);
+        Dft.ntt(&mut nx, &domain);
+        Dft.ntt(&mut ny, &domain);
         let combined: Vec<_> = nx
             .iter()
             .zip(&ny)
@@ -146,6 +146,13 @@ mod tests {
     #[test]
     fn tfhe_stockham_radix8_agrees_with_ark() {
         assert_agrees_with_ark(&TfheStockhamRadix8, &POWERS_OF_TWO_DIV_BY_3);
+    }
+
+    #[test]
+    fn dft_partial_agrees_with_ark() {
+        for s in [2, 4, 8, 16, 50] {
+            assert_prefix_agrees_with_ark(&DftPartial { s }, s, &[64, 128, 256]);
+        }
     }
 
     #[test]

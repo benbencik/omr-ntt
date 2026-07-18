@@ -5,7 +5,7 @@ mod ark_transforms_radix2_rec;
 mod fft3w;
 mod lambdaworks_bowers;
 mod lambdaworks_radix4;
-mod naive;
+mod dft;
 mod plonky3_radix2_dit_parallel;
 mod plonky3_radix2_layer_split;
 mod tfhe_stockham_radix8;
@@ -19,7 +19,7 @@ pub use ark_transforms_radix2_rec::ArkRadix2Rec;
 pub use fft3w::Fft3w;
 pub use lambdaworks_bowers::LambdaBowers;
 pub use lambdaworks_radix4::LambdaRadix4;
-pub use naive::Naive;
+pub use dft::{Dft, DftPartial};
 pub use plonky3_radix2_dit_parallel::Plonky3Radix2DitParallel;
 pub use plonky3_radix2_layer_split::Plonky3Radix2LayerSplit;
 pub use tfhe_stockham_radix8::TfheStockhamRadix8;
@@ -32,7 +32,7 @@ use crate::encoder::NttEncoder;
 
 // LambdaRadix4 only included when log_N is even
 // TfheStockhamRadix8 only included when log_N is divisible by 3
-// Naive is excluded, too slow to bench for large N
+// Dft is excluded, too slow to bench for large N
 pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>> {
     let mut v: Vec<Box<dyn NttEncoder<F>>> = vec![
         Box::new(ArkRadix2),
@@ -53,5 +53,8 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
 }
 
 pub fn all_partial<F: FftField + Send + Sync>(s: usize) -> Vec<Box<dyn NttEncoder<F>>> {
-    vec![Box::new(TransformDecomposition::new(s))]
+    vec![
+        Box::new(DftPartial::new(s)),
+        Box::new(TransformDecomposition::new(s)),
+    ]
 }
