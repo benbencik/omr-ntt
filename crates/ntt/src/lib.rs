@@ -17,7 +17,7 @@ mod tests {
         encoders::{
             ArkRadix2, Fft3w, LambdaBowers, LambdaRadix4, Naive, Plonky3Radix2DitParallel,
             Plonky3Radix2LayerSplit, TfheStockhamRadix8, WinterfellFourStep,
-            WinterfellFourStepPartial,
+            TransformDecomposition,
         },
     };
 
@@ -151,7 +151,22 @@ mod tests {
     #[test]
     fn winterfell_four_step_partial_agrees_with_ark() {
         for s in [2, 4, 8, 16, 50] {
-            assert_prefix_agrees_with_ark(&WinterfellFourStepPartial::new(s), s, &POWERS_OF_TWO);
+            assert_prefix_agrees_with_ark(&TransformDecomposition::new(s), s, &POWERS_OF_TWO);
+        }
+    }
+
+    // N covers: even log(N) and odd log(N) which produce different n1/n2 matrix shapes
+    // s covers: power of two and non-power-of-two even
+    // test covers also case s = N and s = N/2, and s > sqrt(N) and s < sqrt(N)
+    #[test]
+    #[ignore = "slow"]
+    fn winterfell_four_step_partial_large_n() {
+        for s in [1, 2, 3, 50, 101, 16383, 16384] {
+            assert_prefix_agrees_with_ark(
+                &TransformDecomposition::new(s),
+                s,
+                &[1 << 14, 1 << 15, 1 << 22, 1 << 23, 1 << 24],
+            );
         }
     }
 }

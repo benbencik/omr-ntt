@@ -23,7 +23,7 @@ pub use naive::Naive;
 pub use plonky3_radix2_dit_parallel::Plonky3Radix2DitParallel;
 pub use plonky3_radix2_layer_split::Plonky3Radix2LayerSplit;
 pub use tfhe_stockham_radix8::TfheStockhamRadix8;
-pub use transform_decomposition::WinterfellFourStepPartial;
+pub use transform_decomposition::TransformDecomposition;
 pub use winterfell_four_step::WinterfellFourStep;
 
 use ark_ff::FftField;
@@ -53,5 +53,5 @@ pub fn all<F: FftField + Send + Sync>(log_n: u32) -> Vec<Box<dyn NttEncoder<F>>>
 }
 
 pub fn all_partial<F: FftField + Send + Sync>(s: usize) -> Vec<Box<dyn NttEncoder<F>>> {
-    vec![Box::new(WinterfellFourStepPartial::new(s))]
+    vec![Box::new(TransformDecomposition::new(s))]
 }
