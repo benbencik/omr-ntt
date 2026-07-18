@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn dft_partial_agrees_with_ark() {
         for s in [2, 4, 8, 16, 50] {
-            assert_prefix_agrees_with_ark(&DftPartial { s }, s, &[64, 128, 256]);
+            assert_prefix_agrees_with_ark(&DftPartial::new(s), s, &[64, 128, 256]);
         }
     }
 
