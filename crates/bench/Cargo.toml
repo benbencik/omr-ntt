@@ -14,6 +14,8 @@ tfhe-ntt = { git = "https://github.com/zama-ai/tfhe-rs", package = "tfhe-ntt" }
 p3-dft = { git = "https://github.com/Plonky3/Plonky3", package = "p3-dft", features = ["parallel"] }
 p3-goldilocks = { git = "https://github.com/Plonky3/Plonky3", package = "p3-goldilocks" }
 winter-math = { git = "https://github.com/facebook/winterfell", package = "winter-math", features = ["concurrent"] }
+rustfft = { git = "https://github.com/ejmahler/rustfft" }
+oxifft  = { git = "https://github.com/cool-japan/oxifft", package = "oxifft", features = ["pruned"] }
 
 
 [[bench]]
@@ -27,3 +29,4 @@ harness = false
 [[bench]]
 name = "extern_ntt"
 harness = false
+
