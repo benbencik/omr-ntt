@@ -1,7 +1,7 @@
 use bench::{BenchParams, NttDomain, NttEncoder, configure_group, gen_input_seeded};
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use ntt::encoders::{TransformDecomposition, WinterfellFourStep};
 use ntt::Goldilocks;
+use ntt::encoders::{TransformDecomposition, WinterfellFourStep};
 use oxifft::{Complex as OxiComplex, Direction, Flags, Plan as OxiPlan};
 use p3_dft::{Radix2DitParallel, TwoAdicSubgroupDft};
 use p3_goldilocks::Goldilocks as P3Gold;
@@ -32,7 +32,10 @@ fn bench_ntt(c: &mut Criterion) {
         // Float inputs for RustFFT and oxifft (do not support NTT)
         let mut rng_f = SmallRng::seed_from_u64(43);
         let rust_input: Vec<RustComplex<f64>> = (0..n)
-            .map(|_| RustComplex { re: rng_f.r#gen::<f64>(), im: 0.0 })
+            .map(|_| RustComplex {
+                re: rng_f.r#gen::<f64>(),
+                im: 0.0,
+            })
             .collect();
         let oxi_input: Vec<OxiComplex<f64>> = rust_input
             .iter()
@@ -44,8 +47,7 @@ fn bench_ntt(c: &mut Criterion) {
         let domain = NttDomain::<Goldilocks>::new(n);
 
         // setup for external libs
-        let tfhe_plan =
-            tfhe_ntt::prime64::Plan::try_new(n, P).expect("tfhe-ntt plan failed");
+        let tfhe_plan = tfhe_ntt::prime64::Plan::try_new(n, P).expect("tfhe-ntt plan failed");
         let p3_dft = Radix2DitParallel::<P3Gold>::default();
         let twiddles = get_twiddles::<WinterGold>(n);
         let mut planner = FftPlanner::<f64>::new();
@@ -113,13 +115,16 @@ fn bench_ntt(c: &mut Criterion) {
         });
 
         // Local transpose decomposition first 2*s outputs, Goldilocks u64
-        group.bench_function("TransformDecomposition s=50 partial (Goldilocks u64)", |b| {
-            b.iter_batched(
-                || field_input.clone(),
-                |mut buf| partial_encoder.ntt(&mut buf, &domain),
-                BatchSize::LargeInput,
-            )
-        });
+        group.bench_function(
+            "TransformDecomposition s=50 partial (Goldilocks u64)",
+            |b| {
+                b.iter_batched(
+                    || field_input.clone(),
+                    |mut buf| partial_encoder.ntt(&mut buf, &domain),
+                    BatchSize::LargeInput,
+                )
+            },
+        );
 
         group.finish();
     }

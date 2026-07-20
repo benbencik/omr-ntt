@@ -27,6 +27,14 @@ name = "ntt_bench_s"
 harness = false
 
 [[bench]]
+name = "partial_ntt_sweep_s"
+harness = false
+
+[[bench]]
+name = "partial_ntt_sweep_fields"
+harness = false
+
+[[bench]]
 name = "extern_ntt"
 harness = false
 

@@ -3,7 +3,7 @@ use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use ntt::{DefaultField, encoders};
 
 fn partial_ntt_iter_s(c: &mut Criterion) {
-    for params in BenchParams::s_iter(&[22, 24, 27], &[50, 100, 1000]) {
+    for params in BenchParams::s_iter(&[27], &[50]) {
         let n = params.N;
         let s = params.s;
         let log_n = n.trailing_zeros();
@@ -12,7 +12,6 @@ fn partial_ntt_iter_s(c: &mut Criterion) {
 
         let mut group = c.benchmark_group(format!("partial_ntt_iter_s/logN={log_n}_s={s}"));
         configure_group(&mut group, n);
-        group.sample_size(50);
 
         for encoder in encoders::all_partial::<DefaultField>(s) {
             group.bench_function(encoder.name(), |b| {
