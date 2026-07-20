@@ -23,7 +23,8 @@ lto = "fat"
 codegen-units = 1
 
 [profile.bench]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-debug = 1
+inherits = "release"
+
+[profile.profiling]
+inherits = "release"
+debug = true
