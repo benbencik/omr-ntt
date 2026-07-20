@@ -7,7 +7,7 @@ use super::transpose_out_of_place::transpose_par;
 use super::utils::inplace_radix2_dit;
 use crate::encoder::{NttDomain, NttEncoder, powers};
 
-const MIN_ROWS_PER_JOB: usize = 64;
+const THREADS: usize = 16; // TODO: detect at runtime (perhaps in constructor)
 
 pub struct TransformDecomposition {
     pub s: usize,
@@ -30,7 +30,8 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
         }
 
         // TODO: for n < 2^12 run FFT subroutine
-
+        // TODO: for s < log(n) run parallel partial DFT
+        
         let n2 = (2 * out_len).next_power_of_two().clamp(2, n); // subroutine fft size
         let n1 = n / n2;
 
@@ -54,17 +55,20 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
             inplace_radix2_dit(row, &inner_twiddles, log_fft_len);
         });
 
-        const ROWS_PER_BATCH: usize = 64;
+        // TODO: add some safety for small n1
+        // constant 4 works the best based on benchmarks
+        let rows_per_batch = n1 / (THREADS * 4);
+
         // Step 3: recombine with batched twiddle multiplication
         let acc = transposed
             // slice the array into batches
-            .par_chunks(ROWS_PER_BATCH * n2)
+            .par_chunks(rows_per_batch * n2)
             .enumerate() // This gives us the batch_idx, not the row_idx!
             .map(|(batch_idx, batch_data)| {
                 let mut local_acc = vec![F::zero(); out_len];
 
                 // starting row index for this specific batch
-                let start_row_idx = batch_idx * ROWS_PER_BATCH;
+                let start_row_idx = batch_idx * rows_per_batch;
 
                 // calculate twiddle exponent once for the entire batch
                 let mut twiddle_exp = omega.pow([start_row_idx as u64]);
