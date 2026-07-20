@@ -60,24 +60,25 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
         let rows_per_chunk = n2 / num_chunks;
 
         // Step 3: recombine with batched twiddle multiplication
-        let acc = transposed
-            .par_chunks(rows_per_chunk * n1)
-            .enumerate()
-            .map(|(chunk_idx, chunk_data)| {
+        let acc = (0..n2)
+            .into_par_iter()
+            .chunks(rows_per_chunk)
+            .map(|row_indices| {
                 let mut local_acc = vec![F::zero(); out_len];
+                let mut twiddle_exp = omega.pow([row_indices[0] as u64]);
 
-                let start_row_idx = chunk_idx * rows_per_chunk;
-                let mut twiddle_exp = omega.pow([start_row_idx as u64]);
-
-                for row in chunk_data.chunks(n1) {
+                // iterate all rows of the chunk
+                for row_idx in &row_indices {
+                    let row = &transposed[row_idx * n1..row_idx * n1 + out_len];
                     let mut twiddle_step = F::one();
+
+                    // add to the [out_len] partial sums in the columns accumulator
                     for (j, slot) in local_acc.iter_mut().enumerate() {
                         *slot += row[j] * twiddle_step;
                         twiddle_step *= twiddle_exp;
                     }
                     twiddle_exp *= omega;
                 }
-
                 local_acc
             })
             // combine all the local accumulators into the final result
