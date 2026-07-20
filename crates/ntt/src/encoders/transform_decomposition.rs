@@ -1,5 +1,7 @@
 // Partial NTT: computes only the first `2*s` coefficients of an NTT
 
+use std::path::Component::RootDir;
+
 use ark_ff::FftField;
 use rayon::prelude::*;
 
@@ -56,13 +58,15 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
             inplace_radix2_dit(row, &inner_twiddles, log_fft_len);
         });
 
-        let num_chunks = (THREADS * 4).min(n2);
-        let rows_per_chunk = n2 / num_chunks;
+        // TODO: constants wrong fix
+        // let num_chunks = (THREADS * 4).min(n2);
+        // let : usize = 64;
+        let rows_per_chunk = 64;
 
         // Step 3: recombine with batched twiddle multiplication
         let acc = (0..n2)
             .into_par_iter()
-            .chunks(rows_per_chunk)
+            .chunks(rows_per_chunk * n1)
             .map(|row_indices| {
                 let mut local_acc = vec![F::zero(); out_len];
                 let mut twiddle_exp = omega.pow([row_indices[0] as u64]);
