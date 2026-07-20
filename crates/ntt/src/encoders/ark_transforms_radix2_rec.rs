@@ -18,7 +18,7 @@ pub struct ArkRadix2Rec;
 
 impl<F: FftField + Send + Sync> NttEncoder<F> for ArkRadix2Rec {
     fn ntt(&self, buf: &mut [F], domain: &NttDomain<F>) {
-        let out = ntt_rec(buf, &domain.twiddles);
+        let out = ntt_rec(buf, &domain.twiddles[..buf.len() / 2]);
         buf.copy_from_slice(&out);
     }
 

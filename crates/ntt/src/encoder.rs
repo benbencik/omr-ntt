@@ -12,7 +12,7 @@ pub struct NttDomain<F: FftField> {
     pub log_N: u32,
     /// Primitive N-th root of unity
     pub omega: F,
-    /// twiddles[k] = omega^k  for k = 0..N/2
+    /// twiddles[k] = omega^k  for k = 0..N
     pub twiddles: Vec<F>,
     /// bitrev_twiddles[i] = omega^bitrev(i, log_N-1)  for i = 0..N/2
     pub bitrev_twiddles: Vec<F>,
@@ -34,7 +34,7 @@ impl<F: FftField> NttDomain<F> {
         let omega = F::get_root_of_unity(N as u64)
             .expect("root of unity must exist after TWO_ADICITY check");
         debug_assert_eq!(omega.pow([N as u64]), F::one());
-        let twiddles = powers(N / 2, omega);
+        let twiddles = powers(N, omega);
         let bitrev_twiddles = {
             let log_half = log_N - 1;
             (0..N / 2)

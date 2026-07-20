@@ -1,15 +1,13 @@
 // Partial NTT: computes only the first `2*s` coefficients of an NTT
 
-use std::path::Component::RootDir;
-
 use ark_ff::FftField;
 use rayon::prelude::*;
 
 use super::transpose_out_of_place::transpose_par;
 use super::utils::inplace_radix2_dit;
-use crate::encoder::{NttDomain, NttEncoder, powers};
+use crate::encoder::{NttDomain, NttEncoder};
 
-const THREADS: usize = 16; // TODO: detect at runtime (perhaps in constructor)
+// const THREADS: usize = 16; // TODO: detect at runtime (perhaps in constructor)
 
 pub struct TransformDecomposition {
     pub s: usize,
@@ -38,8 +36,8 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
         let n2 = n / n1;
 
         let omega = domain.omega;
-        let omega_n2 = omega.pow([n2 as u64]);
-        let inner_twiddles = powers(n1 / 2, omega_n2);
+
+        let inner_twiddles: Vec<F> = (0..n1 / 2).map(|k| domain.twiddles[k * n2]).collect();
         let log_fft_len = n1.trailing_zeros();
 
         // rust does not want to give uninitialized (unexpected behavior)
@@ -60,7 +58,6 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecomposition {
 
         // TODO: constants wrong fix
         // let num_chunks = (THREADS * 4).min(n2);
-        // let : usize = 64;
         let rows_per_chunk = 64;
 
         // Step 3: recombine with batched twiddle multiplication

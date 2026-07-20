@@ -31,20 +31,11 @@ impl<F: FftField> NttEncoder<F> for TfheStockhamRadix8 {
     }
 }
 
-// Returns omega^exp given twiddles[k]=omega^k for k in 0..N/2.
+// Returns omega^exp given twiddles[k]=omega^k for k in 0..N.
 // exp must be in 0..N.
 #[inline(always)]
-fn omega_pow<F: FftField>(twiddles: &[F], n: usize, exp: usize) -> F {
-    let half = n / 2;
-    if exp == 0 {
-        return F::one();
-    }
-    if exp < half {
-        twiddles[exp]
-    } else {
-        // omega^exp = -omega^{exp - N/2}  (since omega^{N/2} = -1)
-        -twiddles[exp - half]
-    }
+fn omega_pow<F: FftField>(twiddles: &[F], _n: usize, exp: usize) -> F {
+    twiddles[exp]
 }
 
 // Radix-8 DFT butterfly on 8 pre-twiddled inputs.
