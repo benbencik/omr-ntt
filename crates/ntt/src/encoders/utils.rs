@@ -36,6 +36,36 @@ pub(super) fn inplace_radix2_dit<F: FftField>(xi: &mut [F], twiddles: &[F], log_
     }
 }
 
+// same as above but does not derange the input
+pub(super) fn inplace_radix2_dif_no_derange<F: FftField>(xi: &mut [F], twiddles: &[F]) {
+    let n = xi.len();
+    if n < 2 {
+        return;
+    }
+    debug_assert!(n.is_power_of_two());
+    debug_assert_eq!(twiddles.len(), n / 2);
+
+    let mut length = n;
+    while length >= 2 {
+        let half = length / 2;
+        let step = n / length;
+
+        for i in (0..n).step_by(length) {
+            for j in 0..half {
+                let top_idx = i + j;
+                let bot_idx = i + j + half;
+
+                let u = xi[top_idx];
+                let v = xi[bot_idx];
+
+                xi[top_idx] = u + v;
+                xi[bot_idx] = (u - v) * twiddles[j * step];
+            }
+        }
+        length /= 2;
+    }
+}
+
 pub(super) fn derange<T: Send>(xi: &mut [T], log_len: u32) {
     let n = xi.len();
     // cast to usize to bypass compiler checks, since pointers do not implement `Sync`

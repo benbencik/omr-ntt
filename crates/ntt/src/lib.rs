@@ -17,7 +17,7 @@ mod tests {
         encoders::{
             ArkRadix2, Dft, DftPartial, Fft3w, LambdaBowers, LambdaRadix4,
             Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
-            TransformDecomposition, WinterfellFourStep,
+            TransformDecomposition, TransformDecompositionV2, WinterfellFourStep,
         },
     };
 
@@ -159,6 +159,18 @@ mod tests {
     fn winterfell_four_step_partial_agrees_with_ark() {
         for s in [2, 4, 8, 16, 50] {
             assert_prefix_agrees_with_ark(&TransformDecomposition::new(s), s, &POWERS_OF_TWO);
+        }
+    }
+
+    #[test]
+    fn transform_decomposition_v2_agrees_with_ark() {
+        // n1 = next_power_of_8(4s); N must be >= n1, so use amply large sizes.
+        for s in [2, 4, 8, 16, 50] {
+            assert_prefix_agrees_with_ark(
+                &TransformDecompositionV2::new(s),
+                s,
+                &[1024, 4096, 32768, 65536],
+            );
         }
     }
 
