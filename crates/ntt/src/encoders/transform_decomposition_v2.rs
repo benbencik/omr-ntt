@@ -7,11 +7,16 @@ use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct TransformDecompositionV2 {
     pub s: usize,
+    rows_per_chunk: usize,
 }
 
 impl TransformDecompositionV2 {
     pub fn new(s: usize) -> Self {
-        Self { s }
+        let threads = std::thread::available_parallelism().map_or(1, |n| n.get());
+        Self {
+            s,
+            rows_per_chunk: threads * 4,
+        }
     }
 }
 
@@ -56,14 +61,10 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecompositionV2 {
             .map(|j| bitrev(j as u64, log_fft_len) as usize)
             .collect();
 
-        // TODO: constants wrong fix
-        // let num_chunks = (THREADS * 4).min(n2);
-        let rows_per_chunk = 64;
-
         // Step 3: recombine with batched twiddle multiplication
         let acc = (0..n2)
             .into_par_iter()
-            .chunks(rows_per_chunk)
+            .chunks(self.rows_per_chunk * n1)
             .map(|row_indices| {
                 let mut local_acc = vec![F::zero(); out_len];
                 let mut twiddle_exp = omega.pow([row_indices[0] as u64]);
