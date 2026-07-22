@@ -49,9 +49,9 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for DftPartial {
         // parallelize over the input N rather than the 2s outputs
         // there are too few outputs to keep all cores busy
         // each chunk accumulates partial sums, then reduce
-        
+
         // TODO: the chunk should be adaptive based on the out length and maybe the number of cores idk
-        // this is faster than transform decompose on really small s could be probably improved 
+        // this is faster than transform decompose on really small s could be probably improved
         const CHUNK: usize = 1 << 14;
         let acc = buf
             .par_chunks(CHUNK)

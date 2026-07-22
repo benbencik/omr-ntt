@@ -1,8 +1,8 @@
 use bench::{BenchParams, NttDomain, configure_group, gen_input_seeded};
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use ntt::NttEncoder;
 use ntt::encoders::TransformDecomposition;
 use ntt::fields::{BabyBear, Goldilocks, TeddyBear};
-use ntt::NttEncoder;
 
 fn partial_ntt_sweep_fields(c: &mut Criterion) {
     let log_n: u32 = 27;

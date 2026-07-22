@@ -3,7 +3,7 @@ use ntt::encoder::NttDomain;
 use ntt::encoders::TransformDecomposition;
 use ntt::{DefaultField, NttEncoder};
 use std::hint::black_box;
-use std::time::{Duration};
+use std::time::Duration;
 
 const LOG_N: u32 = 27;
 const S: usize = 50;
