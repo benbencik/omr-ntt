@@ -1,7 +1,27 @@
 use ark_ff::FftField;
 use rayon::prelude::*;
 
-// Vanilla sequential iterative radix-2 NTT
+// Per-layer contiguous twiddle table of size N1 for both DIT and DIF.
+pub(super) fn layer_twiddles<F: FftField>(n1: usize, n2: usize, domain_twiddles: &[F]) -> Vec<F> {
+    let mut out = Vec::with_capacity(n1 - 1);
+    let mut layer = 1;
+    while layer < n1 {
+        let step = (n1 / (2 * layer)) * n2;
+        for j in 0..layer {
+            out.push(domain_twiddles[j * step]);
+        }
+        layer *= 2;
+    }
+    out
+}
+
+// Get contiguous twiddles for the current layer
+#[inline]
+fn layer<F>(twiddles: &[F], half: usize) -> &[F] {
+    &twiddles[half - 1..2 * half - 1]
+}
+
+// Vanilla sequential iterative radix-2 NTT (DIT)
 // running sequential derange calls to inplace_radix2_dit are already parallel
 pub(super) fn inplace_radix2_dit<F: FftField>(xi: &mut [F], twiddles: &[F], log_n: u32) {
     let n = xi.len();
@@ -9,7 +29,7 @@ pub(super) fn inplace_radix2_dit<F: FftField>(xi: &mut [F], twiddles: &[F], log_
         return;
     }
     debug_assert!(n.is_power_of_two());
-    debug_assert_eq!(twiddles.len(), n / 2);
+    debug_assert_eq!(twiddles.len(), n - 1);
 
     // DIT: bit-reverse the input
     derange_seq(xi, log_n);
@@ -17,49 +37,45 @@ pub(super) fn inplace_radix2_dit<F: FftField>(xi: &mut [F], twiddles: &[F], log_
     let mut length = 2;
     while length <= n {
         let half = length / 2;
-        let step = n / length;
+        let cur_tw = layer(twiddles, half);
 
-        for i in (0..n).step_by(length) {
+        for block in xi.chunks_mut(length) {
+            let (lo, hi) = block.split_at_mut(half);
             for j in 0..half {
-                let top_idx = i + j;
-                let bot_idx = i + j + half;
-
-                let u = xi[top_idx];
-                let v = xi[bot_idx] * twiddles[j * step];
+                let u = lo[j];
+                let v = hi[j] * cur_tw[j];
 
                 // add and subtract
-                xi[top_idx] = u + v;
-                xi[bot_idx] = u - v;
+                lo[j] = u + v;
+                hi[j] = u - v;
             }
         }
         length *= 2;
     }
 }
 
-// same as above but does not derange the input
+// same as above but does not derange the input (DIF)
 pub(super) fn inplace_radix2_dif_no_derange<F: FftField>(xi: &mut [F], twiddles: &[F]) {
     let n = xi.len();
     if n < 2 {
         return;
     }
     debug_assert!(n.is_power_of_two());
-    debug_assert_eq!(twiddles.len(), n / 2);
+    debug_assert_eq!(twiddles.len(), n - 1);
 
     let mut length = n;
     while length >= 2 {
         let half = length / 2;
-        let step = n / length;
+        let cur_tw = layer(twiddles, half);
 
-        for i in (0..n).step_by(length) {
+        for block in xi.chunks_mut(length) {
+            let (lo, hi) = block.split_at_mut(half);
             for j in 0..half {
-                let top_idx = i + j;
-                let bot_idx = i + j + half;
+                let u = lo[j];
+                let v = hi[j];
 
-                let u = xi[top_idx];
-                let v = xi[bot_idx];
-
-                xi[top_idx] = u + v;
-                xi[bot_idx] = (u - v) * twiddles[j * step];
+                lo[j] = u + v;
+                hi[j] = (u - v) * cur_tw[j];
             }
         }
         length /= 2;

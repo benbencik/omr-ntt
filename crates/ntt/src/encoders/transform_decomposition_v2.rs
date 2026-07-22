@@ -2,7 +2,7 @@ use ark_ff::FftField;
 use rayon::prelude::*;
 
 use super::transpose_out_of_place::transpose_par;
-use super::utils::{bitrev, inplace_radix2_dif_no_derange};
+use super::utils::{bitrev, inplace_radix2_dif_no_derange, layer_twiddles};
 use crate::encoder::{NttDomain, NttEncoder};
 
 pub struct TransformDecompositionV2 {
@@ -38,7 +38,8 @@ impl<F: FftField + Send + Sync> NttEncoder<F> for TransformDecompositionV2 {
 
         let omega = domain.omega;
 
-        let inner_twiddles: Vec<F> = (0..n1 / 2).map(|k| domain.twiddles[k * n2]).collect();
+        // twiddles for NTT(N1) laid out per layer
+        let inner_twiddles = layer_twiddles(n1, n2, &domain.twiddles);
         let log_fft_len = n1.trailing_zeros();
 
         // rust does not want to give uninitialized (unexpected behavior)
