@@ -1,7 +1,6 @@
-//! Unchecked (tests against naive pass)
-// Bowers G-network DIF NTT
+// Bowers NTT - no direct call this algorithm was AI-ported from the source
 // Source project: lambdaworks-math
-// Source path: crates/math/src/fft/cpu/bowers_fft.rs -- bowers_fft_opt_fused, LayerTwiddles
+// Licence: Apache-2.0
 // Reference: Bowers, "Improved Twiddle Access for Fast Fourier Transforms"
 
 use ark_ff::FftField;

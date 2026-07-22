@@ -1,7 +1,6 @@
-//! Unchecked (tests against naive pass)
-// Layer-split parallel DIT NTT (DIT first half + Bowers G^T second half)
+// Layer-split parallel NTT - no direct call this algorithm was AI-ported from the source
 // Source project: Plonky3
-// Source path: dft/src/radix_2_dit_parallel.rs -- Radix2DitParallel::dft_batch
+// License: Apache-2.0 OR MIT
 // Reference: Bowers, "Improved Twiddle Access for Fast Fourier Transforms"
 
 use ark_ff::FftField;

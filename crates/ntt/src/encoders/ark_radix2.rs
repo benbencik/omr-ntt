@@ -1,6 +1,6 @@
-// Radix-2 Cooley-Tukey FFT
-// Source project: arkworks
-// Source path: poly/src/domain/radix2_evaluation_domain.rs -- Radix2EvaluationDomain::fft_in_place
+// Radix-2 FFT
+// Source project: arkworks - direct call
+// License: Apache-2.0 OR MIT
 
 use ark_ff::FftField;
 use ark_poly::{EvaluationDomain, Radix2EvaluationDomain};

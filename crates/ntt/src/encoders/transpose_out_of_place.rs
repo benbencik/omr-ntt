@@ -1,4 +1,5 @@
-//! Stolen from https://crates.io/crates/transpose
+// Copied and modified from transpose v0.2.3 (https://crates.io/crates/transpose)
+// License: Apache-2.0 OR MIT
 
 // Block size used by the tiling algoritms
 const BLOCK_SIZE: usize = 16;

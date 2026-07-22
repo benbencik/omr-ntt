@@ -15,9 +15,9 @@ mod tests {
     use crate::{
         encoder::{Input, NttDomain, NttEncoder},
         encoders::{
-            ArkRadix2, Dft, DftPartial, Fft3w, LambdaBowers, LambdaRadix4,
-            Plonky3Radix2DitParallel, Plonky3Radix2LayerSplit, TfheStockhamRadix8,
-            TransformDecomposition, TransformDecompositionV2, WinterfellFourStep,
+            ArkRadix2, Dft, DftPartial, LambdaBowers, LambdaRadix4, Plonky3Radix2LayerSplit,
+            TfheStockhamRadix8, TransformDecomposition, TransformDecompositionV2,
+            WinterfellFourStep,
         },
     };
 
@@ -117,18 +117,8 @@ mod tests {
     }
 
     #[test]
-    fn plonky3_radix2_dit_parallel_agrees_with_ark() {
-        assert_agrees_with_ark(&Plonky3Radix2DitParallel, &POWERS_OF_TWO);
-    }
-
-    #[test]
     fn winterfell_four_step_agrees_with_ark() {
         assert_agrees_with_ark(&WinterfellFourStep, &POWERS_OF_TWO);
-    }
-
-    #[test]
-    fn fft3w_agrees_with_ark() {
-        assert_agrees_with_ark(&Fft3w, &POWERS_OF_TWO);
     }
 
     #[test]

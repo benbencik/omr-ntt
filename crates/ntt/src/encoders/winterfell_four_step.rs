@@ -1,8 +1,7 @@
-//! Unchecked (tests against naive pass)
-// Four-step transpose-based parallel NTT
-// Source project: winterfell/math
-// Source path: math/src/fft/concurrent.rs -- split_radix_fft (adapted from https://github.com/0xProject/OpenZKP)
-// Reference: Bailey, "FFTs in External or Hierarchical Memory" (J. Supercomput., 1990)
+// Four-step transpose-based parallel NTT - no direct call this algorithm was copied and modified
+// Source project: winterfell
+// License: MIT
+// Reference: Bailey, "FFTs in External or Hierarchical Memory"
 
 use ark_ff::FftField;
 use rayon::prelude::*;

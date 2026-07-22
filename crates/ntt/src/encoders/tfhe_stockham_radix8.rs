@@ -1,14 +1,11 @@
-//! Unchecked (tests against naive pass)
-// Stockham auto-sort radix-8 DIT NTT (out-of-place, no bit-reversal)
-// Source project: tfhe-fft
-// Source path: src/dit8.rs -- stockham_core_generic, last_butterfly
-// Reference: OTFFT by Takuya OKAHISA (http://wwwa.pikara.ne.jp/okojisan/otfft-en/)
-//
-// Requires N to be a power of 8 (log₂N divisible by 3).
+// Stockham NTT - no direct call this algorithm was AI-ported from the source
+// Source project: tfhe-ntt
+// License: BSD 3-Clause Clear License
+
+// Requires N to be a power of 8 (log2N divisible by 3).
 // The Stockham form alternates between two buffers each pass, eliminating the
 // bit-reversal permutation entirely. Each pass reduces the stride by 8×,
-// so log₈(N) passes suffice.
-
+// so log8(N) passes suffice.
 use ark_ff::FftField;
 
 use crate::encoder::{NttDomain, NttEncoder};

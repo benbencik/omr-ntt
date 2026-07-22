@@ -1,7 +1,6 @@
-//! Unchecked (tests against naive pass)
-// Radix-4 NR DIT NTT (natural-order input, bit-reversed output)
+// Radix-4 NTT - no direct call this algorithm was AI-ported from the source
 // Source project: lambdaworks-math
-// Source path: crates/math/src/fft/cpu/fft.rs -- in_place_nr_4radix_fft
+// Licence: Apache-2.0
 // Reference: Singleton, "An algorithm for computing the mixed radix fast Fourier transform"
 
 use ark_ff::FftField;
