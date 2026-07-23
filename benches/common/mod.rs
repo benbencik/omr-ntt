@@ -1,3 +1,4 @@
+// Shared helpers for the criterion benches
 use std::time::Duration;
 
 use ark_ff::FftField;
@@ -28,7 +29,7 @@ impl BenchParams {
     }
 
     pub fn n_iter(log_n: &[u32]) -> Vec<Self> {
-        const S: usize = 1000; // fix to s 1000 (arbitrary) 
+        const S: usize = 1000; // fix to s 1000 (arbitrary)
         log_n
             .iter()
             .map(|&log_n| Self::new(1 << log_n, S))
@@ -44,7 +45,7 @@ impl BenchParams {
 }
 
 pub fn configure_group(group: &mut BenchmarkGroup<'_, WallTime>, n: usize) {
-    let secs = if n >= 1 << 26 { 350 } else { 60 };
+    let secs = if n >= 1 << 26 { 120 } else { 60 };
     group
         .measurement_time(Duration::from_secs(secs))
         .throughput(Throughput::Elements(n as u64));
@@ -52,6 +53,5 @@ pub fn configure_group(group: &mut BenchmarkGroup<'_, WallTime>, n: usize) {
 
 pub fn gen_input_seeded<F: FftField>(params: &BenchParams, seed: u64) -> Input<F> {
     let mut rng = rand::rngs::SmallRng::seed_from_u64(seed);
-    let v = (0..params.N).map(|_| F::rand(&mut rng)).collect();
-    v
+    (0..params.N).map(|_| F::rand(&mut rng)).collect()
 }

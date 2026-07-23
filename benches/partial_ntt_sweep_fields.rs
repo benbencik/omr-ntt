@@ -1,4 +1,5 @@
-use bench::{BenchParams, NttDomain, configure_group, gen_input_seeded};
+mod common;
+use common::{BenchParams, NttDomain, configure_group, gen_input_seeded};
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use ntt::NttEncoder;
 use ntt::encoders::TransformDecomposition;

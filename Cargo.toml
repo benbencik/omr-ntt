@@ -1,21 +1,53 @@
-[workspace]
-members = ["crates/ntt", "crates/bench"]
-resolver = "2"
-
-[workspace.package]
-edition = "2024"
+[package]
+name = "ntt"
 version = "0.1.0"
+edition = "2024"
+description = "CPU-optimized NTT encoders for OMR-FFT, with criterion benches."
 
-[workspace.dependencies]
+[dependencies]
 ark-ff = { git = "https://github.com/arkworks-rs/algebra.git", branch = "master", features = ["std", "parallel"] }
 ark-poly = { git = "https://github.com/arkworks-rs/algebra.git", branch = "master", features = ["std", "parallel"] }
-ark-std = { version = "0.5.0", features = ["std"] }
-ntt = { path = "crates/ntt" }
-criterion = { version = "0.8", default-features = false }
-rand = { version = "0.8", features = ["small_rng"] }
 rayon = "1.10"
 strength_reduce = "^0.2.1"
 num-integer = { version = "0.1", default-features = false }
+
+# External FFT/NTT libraries, only pulled for the `extern_ntt` bench
+tfhe-ntt = { git = "https://github.com/zama-ai/tfhe-rs", package = "tfhe-ntt", optional = true }
+p3-dft = { git = "https://github.com/Plonky3/Plonky3", package = "p3-dft", features = ["parallel"], optional = true }
+p3-goldilocks = { git = "https://github.com/Plonky3/Plonky3", package = "p3-goldilocks", optional = true }
+winter-math = { git = "https://github.com/facebook/winterfell", package = "winter-math", features = ["concurrent"], optional = true }
+rustfft = { git = "https://github.com/ejmahler/rustfft", optional = true }
+oxifft = { git = "https://github.com/cool-japan/oxifft", package = "oxifft", features = ["pruned"], optional = true }
+
+[dev-dependencies]
+ark-std = { version = "0.5.0", features = ["std"] }
+rand = { version = "0.8", features = ["small_rng"] }
+criterion = { version = "0.8", default-features = false, features = ["rayon", "html_reports"] }
+
+[features]
+# Enable to run the external-library bench
+extern-bench = ["dep:tfhe-ntt", "dep:p3-dft", "dep:p3-goldilocks", "dep:winter-math", "dep:rustfft", "dep:oxifft"]
+
+[[bench]]
+name = "ntt_bench_n"
+harness = false
+
+[[bench]]
+name = "ntt_bench_s"
+harness = false
+
+[[bench]]
+name = "partial_ntt_sweep_s"
+harness = false
+
+[[bench]]
+name = "partial_ntt_sweep_fields"
+harness = false
+
+[[bench]]
+name = "extern_ntt"
+harness = false
+required-features = ["extern-bench"]
 
 [profile.release]
 opt-level = 3

@@ -1,19 +1,20 @@
-use bench::{BenchParams, NttDomain, configure_group, gen_input_seeded};
+mod common;
+use common::{BenchParams, NttDomain, configure_group, gen_input_seeded};
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use ntt::{DefaultField, encoders};
 
-fn full_ntt_iter_n(c: &mut Criterion) {
-    for params in BenchParams::n_iter(&[22, 24, 27]) {
+fn partial_ntt_iter_s(c: &mut Criterion) {
+    for params in BenchParams::s_iter(&[27], &[50]) {
         let n = params.N;
+        let s = params.s;
         let log_n = n.trailing_zeros();
         let domain = NttDomain::<DefaultField>::new(n);
         let input = gen_input_seeded::<DefaultField>(&params, 42);
 
-        let mut group = c.benchmark_group(format!("full_ntt_iter_n/logN={log_n}"));
+        let mut group = c.benchmark_group(format!("partial_ntt_iter_s/logN={log_n}_s={s}"));
         configure_group(&mut group, n);
-        group.sample_size(50);
 
-        for encoder in encoders::all::<DefaultField>(log_n) {
+        for encoder in encoders::all_partial::<DefaultField>(s) {
             group.bench_function(encoder.name(), |b| {
                 b.iter_batched(
                     || input.clone(),
@@ -26,5 +27,5 @@ fn full_ntt_iter_n(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, full_ntt_iter_n);
+criterion_group!(benches, partial_ntt_iter_s);
 criterion_main!(benches);

@@ -178,23 +178,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
-name = "bench"
-version = "0.1.0"
-dependencies = [
- "ark-ff",
- "ark-std 0.5.0",
- "criterion",
- "ntt",
- "oxifft",
- "p3-dft",
- "p3-goldilocks",
- "rand 0.8.6",
- "rustfft",
- "tfhe-ntt",
- "winter-math",
-]
-
-[[package]]
 name = "bitflags"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -695,10 +678,17 @@ dependencies = [
  "ark-ff",
  "ark-poly",
  "ark-std 0.5.0",
+ "criterion",
  "num-integer",
+ "oxifft",
+ "p3-dft",
+ "p3-goldilocks",
  "rand 0.8.6",
  "rayon",
+ "rustfft",
  "strength_reduce",
+ "tfhe-ntt",
+ "winter-math",
 ]
 
 [[package]]
